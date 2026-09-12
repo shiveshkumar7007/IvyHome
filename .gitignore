@@ -1,0 +1,17 @@
+.env
+frontend/.env
+
+node_modules/
+frontend/node_modules/
+
+dist/
+frontend/dist/
+build/
+
+data/listings.json
+frontend/public/listings.json
+analysis-results.json
+
+.DS_Store
+Thumbs.db
+*.log
