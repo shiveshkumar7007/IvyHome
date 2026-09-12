@@ -1,6 +1,7 @@
 import { fixPropertyData } from "../utils/helpers";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Fallback to official base URL if environment variable is missing on host
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://solve.ivy.homes";
 const API_KEY = import.meta.env.VITE_API_KEY;
 
 // --- Native Cookie Helpers ---
@@ -42,11 +43,10 @@ export function getAccessToken() {
 export function logout() {
   eraseCookie("access_token");
   eraseCookie("user_email");
-  // Force a hard redirect to clear all React state and return to login
   window.location.href = "/login";
 }
 
-// Centralized Request Interceptor
+// Centralized Request Interceptor using safe URL parsing
 async function request(path, options = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -57,22 +57,40 @@ async function request(path, options = {}) {
   let token = getCookie("access_token");
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const separator = path.includes("?") ? "&" : "?";
-  const url = `${BASE_URL}${path}${separator}api_key=${API_KEY}`;
+  // Build safe absolute URL and append api_key query param cleanly
+  const baseUrlClean = BASE_URL.replace(/\/+$/, "");
+  const pathClean = path.startsWith("/") ? path : `/${path}`;
+  const targetUrl = new URL(`${baseUrlClean}${pathClean}`);
+  
+  if (API_KEY && !targetUrl.searchParams.has("api_key")) {
+    targetUrl.searchParams.set("api_key", API_KEY);
+  }
 
-  let response = await fetch(url, { ...options, headers });
+  let response = await fetch(targetUrl.toString(), { ...options, headers });
 
-  // If token is expired or invalid (401), force a clean logout
   if (response.status === 401) {
     logout();
     throw new Error("Session expired. Please log in again.");
   }
 
   const text = await response.text();
-  let data = {};
-  try { data = text ? JSON.parse(text) : {}; } catch { data = {}; }
+  
+  // Guard against hosting providers returning index.html (HTML) on route misses
+  if (text.trim().startsWith("<")) {
+    throw new Error(`Server returned HTML instead of JSON (${response.status}). Verify API route.`);
+  }
 
-  if (!response.ok) throw new Error(data.detail || data.message || `Request failed: ${response.status}`);
+  let data = {};
+  try { 
+    data = text ? JSON.parse(text) : {}; 
+  } catch { 
+    data = {}; 
+  }
+
+  if (!response.ok) {
+    throw new Error(data.detail || data.message || `Request failed with status ${response.status}`);
+  }
+  
   return data;
 }
 
@@ -82,10 +100,9 @@ export async function login(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
-  // Set Access Token for exactly 24 hours (24 * 60 = 1440 minutes)
+  // Set Access Token for 24 hours (1440 minutes)
   setCookie("access_token", data.access_token || data.token, 1440);
   
-  // Store user identifier to maintain isolated favourites for 24 hours
   if (data.user?.email || email) {
     setCookie("user_email", data.user?.email || email, 1440);
   }
@@ -96,9 +113,14 @@ export async function login(email, password) {
 export async function getListings(params = {}) {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") query.set(key, value);
+    if (value !== undefined && value !== null && value !== "") {
+      query.set(key, value);
+    }
   });
-  return request(`/v1/listings?${query.toString()}`);
+  
+  const queryString = query.toString();
+  const path = queryString ? `/v1/listings?${queryString}` : "/v1/listings";
+  return request(path);
 }
 
 export async function getListing(id) {
@@ -111,7 +133,9 @@ export async function getRentals(params = {}) {
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") query.set(key, value);
   });
-  return request(`/v1/rentals?${query.toString()}`);
+  const queryString = query.toString();
+  const path = queryString ? `/v1/rentals?${queryString}` : "/v1/rentals";
+  return request(path);
 }
 
 export async function getRental(id) {
@@ -124,7 +148,9 @@ export async function getProjects(params = {}) {
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") query.set(key, value);
   });
-  return request(`/v1/projects?${query.toString()}`);
+  const queryString = query.toString();
+  const path = queryString ? `/v1/projects?${queryString}` : "/v1/projects";
+  return request(path);
 }
 
 export async function getProject(id) {
@@ -168,8 +194,12 @@ export async function removeFavourite(listingId) {
 }
 
 export async function getInsights() {
-  try { return await request("/v1/analytics/summary"); } 
-  catch (error) { return {}; }
+  try { 
+    return await request("/v1/analytics/summary"); 
+  } catch (error) { 
+    console.warn("Insights endpoint notice:", error);
+    return {}; 
+  }
 }
 
 export function extractItems(response) {
