@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Database, Home, TrendingUp, Ruler, PieChart, Download } from "lucide-react";
-import { formatPrice, fixPropertyData } from "../utils/helpers";
+import { formatPrice } from "../utils/helpers";
 import { getInsights } from "../api/ivyApi";
 import { useToast } from "../context/ToastContext";
 
@@ -72,7 +72,7 @@ export default function Insights() {
           <div className="space-y-10">
             <section>
               <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
-                <TrendingUp size/={16} className="text-[#D97051]" /> Primary City Aggregates
+                <TrendingUp size={16} className="text-[#D97051]" /> Primary City Aggregates
               </h2>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
