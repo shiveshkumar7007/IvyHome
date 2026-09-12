@@ -1,6 +1,5 @@
 import { fixPropertyData } from "../utils/helpers";
 
-// Fallback to official base URL if environment variable is missing on host
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://solve.ivy.homes";
 const API_KEY = import.meta.env.VITE_API_KEY;
 
@@ -29,7 +28,6 @@ function getCookie(name) {
 function eraseCookie(name) {
   document.cookie = name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
 }
-// -----------------------------
 
 export function isAuthenticated() {
   return !!getCookie("access_token");
@@ -39,14 +37,12 @@ export function getAccessToken() {
   return getCookie("access_token");
 }
 
-// Global Logout Function
 export function logout() {
   eraseCookie("access_token");
   eraseCookie("user_email");
   window.location.href = "/login";
 }
 
-// Centralized Request Interceptor using safe URL parsing
 async function request(path, options = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -57,7 +53,6 @@ async function request(path, options = {}) {
   let token = getCookie("access_token");
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  // Build safe absolute URL and append api_key query param cleanly
   const baseUrlClean = BASE_URL.replace(/\/+$/, "");
   const pathClean = path.startsWith("/") ? path : `/${path}`;
   const targetUrl = new URL(`${baseUrlClean}${pathClean}`);
@@ -75,7 +70,6 @@ async function request(path, options = {}) {
 
   const text = await response.text();
   
-  // Guard against hosting providers returning index.html (HTML) on route misses
   if (text.trim().startsWith("<")) {
     throw new Error(`Server returned HTML instead of JSON (${response.status}). Verify API route.`);
   }
@@ -100,14 +94,19 @@ export async function login(email, password) {
     body: JSON.stringify({ email, password }),
   });
 
-  // Set Access Token for 24 hours (1440 minutes)
   setCookie("access_token", data.access_token || data.token, 1440);
-  
   if (data.user?.email || email) {
     setCookie("user_email", data.user?.email || email, 1440);
   }
 
   return data;
+}
+
+export function extractItems(response) {
+  let items = [];
+  if (Array.isArray(response)) items = response;
+  else items = response?.results || response?.data || response?.listings || response?.projects || response?.rentals || response?.items || [];
+  return items.map(fixPropertyData);
 }
 
 export async function getListings(params = {}) {
@@ -121,6 +120,34 @@ export async function getListings(params = {}) {
   const queryString = query.toString();
   const path = queryString ? `/v1/listings?${queryString}` : "/v1/listings";
   return request(path);
+}
+
+// Helper to fetch the complete dataset across all pages for the Insights audit engine
+export async function getAllListings(params = {}) {
+  let allItems = [];
+  let limit = 200; 
+
+  const initialRes = await getListings({ ...params, page: 1, limit });
+  const initialItems = extractItems(initialRes);
+  allItems = allItems.concat(initialItems);
+  
+  const total = initialRes?.total || allItems.length;
+  
+  if (total > allItems.length) {
+    const totalPages = Math.ceil(total / limit);
+    const promises = [];
+
+    for (let p = 2; p <= totalPages; p++) {
+      promises.push(getListings({ ...params, page: p, limit }));
+    }
+
+    const results = await Promise.all(promises);
+    results.forEach((res) => {
+      allItems = allItems.concat(extractItems(res));
+    });
+  }
+
+  return allItems;
 }
 
 export async function getListing(id) {
@@ -158,7 +185,6 @@ export async function getProject(id) {
   return fixPropertyData(data);
 }
 
-// LocalStorage Favourites bound to the specific user's cookie
 function getUserFavKey() {
   const email = getCookie("user_email") || 'guest';
   return `ivy_favs_${email}`;
@@ -197,14 +223,6 @@ export async function getInsights() {
   try { 
     return await request("/v1/analytics/summary"); 
   } catch (error) { 
-    console.warn("Insights endpoint notice:", error);
-    return {}; 
+    return null; 
   }
-}
-
-export function extractItems(response) {
-  let items = [];
-  if (Array.isArray(response)) items = response;
-  else items = response?.results || response?.data || response?.listings || response?.projects || response?.rentals || response?.items || [];
-  return items.map(fixPropertyData);
 }

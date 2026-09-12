@@ -19,13 +19,13 @@ import {
 } from "lucide-react";
 import { formatPrice } from "../utils/helpers";
 import { useToast } from "../context/ToastContext";
-import { getInsights, getListings, extractItems } from "../api/ivyApi";
+import { getInsights, getAllListings } from "../api/ivyApi";
 
 export default function Insights() {
   const [rawListings, setRawListings] = useState([]);
   const [summaryMetrics, setSummaryMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState("");
+  const [loadingText, setLoadingText] = useState("Loading complete dataset corpus...");
   const [error, setError] = useState("");
   const { showToast } = useToast();
   
@@ -34,48 +34,26 @@ export default function Insights() {
   const [inspectModal, setInspectModal] = useState(null);
 
   useEffect(() => {
-    async function loadCompleteDataset() {
+    async function loadFullData() {
       try {
         setLoading(true);
         setError("");
-        setLoadingProgress("Fetching summary and initial batch...");
+        setLoadingText("Fetching server analytics summary and full listing records...");
 
-        // 1. Fetch server summary and the first page of listings concurrently
-        const [summaryRes, initialRes] = await Promise.all([
-          getInsights().catch(() => null),
-          getListings({ limit: 200, offset: 0 }).catch(() => [])
+        const [summaryRes, fullListings] = await Promise.all([
+          getInsights(),
+          getAllListings()
         ]);
 
         setSummaryMetrics(summaryRes);
-        let allItems = extractItems(initialRes);
-        const totalRecords = summaryRes?.total || initialRes?.total || allItems.length;
-
-        // 2. If there are more records, fetch the rest in parallel chunks to get the full 3800+ dataset
-        if (totalRecords > 200) {
-          const limit = 200;
-          const totalPages = Math.ceil(totalRecords / limit);
-          const promises = [];
-
-          for (let page = 1; page < totalPages; page++) {
-            setLoadingProgress(`Loading complete market dataset (${Math.min(page * limit, totalRecords)} / ${totalRecords})...`);
-            promises.push(getListings({ limit, offset: page * limit }).catch(() => []));
-          }
-
-          const results = await Promise.all(promises);
-          results.forEach((res) => {
-            allItems = allItems.concat(extractItems(res));
-          });
-        }
-
-        setRawListings(allItems);
+        setRawListings(fullListings);
       } catch (err) {
-        setError(err.message || "Unable to load complete market intelligence data");
+        setError(err.message || "Unable to load market intelligence data");
       } finally {
         setLoading(false);
-        setLoadingProgress("");
       }
     }
-    loadCompleteDataset();
+    loadFullData();
   }, []);
 
   const localities = useMemo(() => {
@@ -195,11 +173,11 @@ export default function Insights() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "ivyhomes_complete_dataset_audit.csv");
+    link.setAttribute("download", "ivyhomes_full_corpus_audit.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast("Complete Audit Report Exported Successfully!", "success");
+    showToast("Audit Report Exported Successfully!", "success");
   };
 
   return (
@@ -209,9 +187,9 @@ export default function Insights() {
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#1E2022]/10 pb-6">
           <div>
             <p className="mb-1 text-sm font-bold uppercase tracking-wider text-[#D97051]">Executive BI Workspace</p>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#1E2022] sm:text-4xl">Complete Market Intelligence & Audit</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-[#1E2022] sm:text-4xl">Full Market Intelligence & Audit</h1>
             <p className="mt-1 text-sm text-[#1E2022]/60">
-              Full-corpus analysis across all retrievable backend records with real-time audit tracing.
+              Interactive analytics engine processing 100% of retrievable server records with real-time audit tracing.
             </p>
           </div>
 
@@ -244,7 +222,7 @@ export default function Insights() {
             </div>
             
             <button onClick={exportToCSV} className="flex h-full items-center gap-2 rounded-2xl bg-[#1E2022] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#D97051] shadow-sm">
-              <Download size={16} /> Export Full CSV
+              <Download size={16} /> Export CSV
             </button>
           </div>
         </div>
@@ -252,7 +230,7 @@ export default function Insights() {
         {loading && (
           <div className="rounded-2xl bg-white p-12 text-center shadow-sm border border-gray-100 space-y-4">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#D97051] border-r-transparent"></div>
-            <p className="font-bold text-[#1E2022]">{loadingProgress || "Loading complete dataset..."}</p>
+            <p className="font-bold text-[#1E2022]">{loadingText}</p>
           </div>
         )}
 
@@ -264,7 +242,7 @@ export default function Insights() {
             <section>
               <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
                 <TrendingUp size={16} className="text-[#D97051]" />
-                Full-Corpus KPI Indicators {selectedLocality !== "all" && `— Filtering: ${selectedLocality}`}
+                Primary KPI Indicators {selectedLocality !== "all" && `— Filtering: ${selectedLocality}`}
               </h2>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
@@ -338,7 +316,7 @@ export default function Insights() {
                 <div className="mb-6 flex justify-between items-center">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
                     <PieChart size={16} className="text-[#D97051]" />
-                    BHK Volume Distribution (Full Corpus)
+                    BHK Volume Distribution
                   </h3>
                 </div>
                 <div className="space-y-4">
@@ -363,7 +341,7 @@ export default function Insights() {
                 <div className="mb-6 flex justify-between items-center">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
                     <PieChart size={16} className="text-[#D97051]" />
-                    Inventory Category Share (Full Corpus)
+                    Inventory Category Share
                   </h3>
                 </div>
                 <div className="space-y-4">
@@ -389,7 +367,7 @@ export default function Insights() {
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
                   <ShieldAlert size={16} className="text-red-500" />
-                  Security & Integrity Radar (Full Corpus Audit)
+                  Security & Integrity Radar (Click card to audit)
                 </h2>
               </div>
               <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-3">
