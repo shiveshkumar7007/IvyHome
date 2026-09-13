@@ -5,10 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    // Prevents production chunking and module resolution crashes on Vercel
     rolldownOptions: {
-      external: [],
+      // Explicitly tell Rolldown to treat leaflet as external on Vercel
+      external: ["leaflet"],
     },
-    chunkSizeWarningLimit: 1000,
   },
 });
