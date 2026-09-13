@@ -14,8 +14,11 @@ export default function Projects() {
   const [selectedListing, setSelectedListing] = useState(null);
   const [favourites, setFavourites] = useState([]);
 
-  const [search, setSearch] = useState("wakad");
+  // Filter States
+  const [search, setSearch] = useState("");
   const [builder, setBuilder] = useState("");
+  const [projectStatus, setProjectStatus] = useState("");
+  const [facing, setFacing] = useState("");
   const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export default function Projects() {
       const q = search.toLowerCase().trim();
       result = result.filter(item => 
         (item.locality || "").toLowerCase().includes(q) || 
-        (item.project_name || item.title || "").toLowerCase().includes(q) ||
+        (item.project_name || item.title || item.name || "").toLowerCase().includes(q) ||
         (item.builder_name || "").toLowerCase().includes(q)
       );
     }
@@ -75,19 +78,32 @@ export default function Projects() {
       const b = builder.toLowerCase().trim();
       result = result.filter(item => (item.builder_name || "").toLowerCase().includes(b));
     }
-
-    if (sortBy === "price-asc") {
-      result.sort((a, b) => Number(a.price) - Number(b.price));
-    } else if (sortBy === "price-desc") {
-      result.sort((a, b) => Number(b.price) - Number(a.price));
+    if (projectStatus) {
+      result = result.filter(item => (item.project_status || "").toLowerCase() === projectStatus.toLowerCase());
+    }
+    if (facing) {
+      result = result.filter(item => (item.facing_direction || "").toLowerCase() === facing.toLowerCase());
     }
 
-    return result.map(item => ({ ...item, __type: 'project' }));
-  }, [allProjects, search, builder, sortBy]);
+    if (sortBy === "price-asc") {
+      result.sort((a, b) => Number(a.price_min || a.price || 0) - Number(b.price_min || b.price || 0));
+    } else if (sortBy === "price-desc") {
+      result.sort((a, b) => Number(b.price_min || b.price || 0) - Number(a.price_min || a.price || 0));
+    }
+
+    // Ensure price properties are correctly mapped so ListingCards displays valid numbers instead of flags
+    return result.map(item => ({ 
+      ...item, 
+      price: item.price_min || item.price || 0,
+      __type: 'project' 
+    }));
+  }, [allProjects, search, builder, projectStatus, facing, sortBy]);
 
   const clearFilters = () => {
     setSearch("");
     setBuilder("");
+    setProjectStatus("");
+    setFacing("");
     setSortBy("default");
   };
 
@@ -153,6 +169,22 @@ export default function Projects() {
                     <p className="font-bold text-[#1E2022]">{selectedListing.min_area_sqft || '--'} sq.ft</p>
                   </div>
                 </div>
+
+                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2">
+                  <Compass size={16} className="text-[#D97051]" />
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase font-bold">Facing</p>
+                    <p className="font-bold text-[#1E2022] capitalize">{selectedListing.facing_direction || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2">
+                  <Layers size={16} className="text-[#D97051]" />
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase font-bold">Total Listings</p>
+                    <p className="font-bold text-[#1E2022]">{selectedListing.total_listings || selectedListing.listing_count || '--'}</p>
+                  </div>
+                </div>
               </div>
 
               <div className="p-3 bg-[#FDF1EA]/50 rounded-2xl border border-[#D97051]/20 flex items-center justify-between">
@@ -214,6 +246,37 @@ export default function Projects() {
                 placeholder="e.g. salarpuria..." 
                 className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#D97051]" 
               />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Project Status</label>
+              <select 
+                value={projectStatus} 
+                onChange={(e) => setProjectStatus(e.target.value)} 
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051] capitalize"
+              >
+                <option value="">All statuses</option>
+                <option value="under construction">Under Construction</option>
+                <option value="ready to move">Ready to Move</option>
+                <option value="new launch">New Launch</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Facing Direction</label>
+              <select 
+                value={facing} 
+                onChange={(e) => setFacing(e.target.value)} 
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051] capitalize"
+              >
+                <option value="">Any direction</option>
+                <option value="east">East</option>
+                <option value="west">West</option>
+                <option value="north">North</option>
+                <option value="south">South</option>
+                <option value="north-east">North-East</option>
+                <option value="north-west">North-West</option>
+                <option value="south-east">South-East</option>
+                <option value="south-west">South-West</option>
+              </select>
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Sort Order</label>

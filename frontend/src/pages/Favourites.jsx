@@ -10,9 +10,13 @@ export default function Favourites() {
   const [compareList, setCompareList] = useState([]);
   const { showToast } = useToast();
 
-  // Filter States
+  // Filter States (Including Category: Listing, Rental, Project)
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
   const [propertyType, setPropertyType] = useState("");
+  const [bedroom, setBedroom] = useState("");
+  const [furnishing, setFurnishing] = useState("");
+  const [facing, setFacing] = useState("");
 
   useEffect(() => {
     getFavourites().then(setFavourites);
@@ -20,8 +24,8 @@ export default function Favourites() {
 
   const toggleCompare = (listing) => {
     setCompareList(prev => {
-      const exists = prev.find(p => (p.listing_id || p.id) === (listing.listing_id || listing.id));
-      if (exists) return prev.filter(p => (p.listing_id || p.id) !== (listing.listing_id || listing.id));
+      const exists = prev.find(p => (p.listing_id || p.project_id || p.id) === (listing.listing_id || listing.project_id || listing.id));
+      if (exists) return prev.filter(p => (p.listing_id || p.project_id || p.id) !== (listing.listing_id || listing.project_id || listing.id));
       if (prev.length >= 3) {
         showToast("You can only compare up to 3 properties", "error");
         return prev; 
@@ -43,13 +47,37 @@ export default function Favourites() {
   };
 
   const filteredFavourites = useMemo(() => {
-    return favourites.filter((listing) => {
+    return favourites.filter((item) => {
       const query = search.trim().toLowerCase();
-      const matchesSearch = !query || String(listing.apartment_name || listing.name || "").toLowerCase().includes(query) || String(listing.locality || "").toLowerCase().includes(query);
-      const matchesPropertyType = !propertyType || String(listing.property_type || listing.project_status || "").toLowerCase() === propertyType.toLowerCase();
-      return matchesSearch && matchesPropertyType;
+      const matchesSearch = !query || String(item.apartment_name || item.project_name || item.name || "").toLowerCase().includes(query) || String(item.locality || "").toLowerCase().includes(query);
+      
+      // Determine item category helper
+      const isRental = item.__type === 'rental' || String(item.listing_id || item.id || "").startsWith("R");
+      const isProject = item.__type === 'project' || String(item.project_id || item.id || "").startsWith("P") || item.project_status;
+      const isListing = !isRental && !isProject;
+
+      let matchesCategory = true;
+      if (category === "rental") matchesCategory = isRental;
+      else if (category === "project") matchesCategory = isProject;
+      else if (category === "listing") matchesCategory = isListing;
+
+      const matchesPropertyType = !propertyType || String(item.property_type || item.project_status || "").toLowerCase() === propertyType.toLowerCase();
+      const matchesBedroom = !bedroom || Number(item.bedroom) === Number(bedroom);
+      const matchesFurnishing = !furnishing || String(item.furnishing || "").toLowerCase() === furnishing.toLowerCase();
+      const matchesFacing = !facing || String(item.facing_direction || "").toLowerCase() === facing.toLowerCase();
+
+      return matchesSearch && matchesCategory && matchesPropertyType && matchesBedroom && matchesFurnishing && matchesFacing;
     });
-  }, [favourites, search, propertyType]);
+  }, [favourites, search, category, propertyType, bedroom, furnishing, facing]);
+
+  const clearFilters = () => {
+    setSearch("");
+    setCategory("");
+    setPropertyType("");
+    setBedroom("");
+    setFurnishing("");
+    setFacing("");
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -62,10 +90,98 @@ export default function Favourites() {
           </div>
         ) : (
           <div className="mb-20">
-            <div className="mb-4 text-sm font-semibold text-[#1E2022]/60">Filter and Compare:</div>
+            <div className="mb-4 text-sm font-semibold text-[#1E2022]/60">Filter and Compare Favourites:</div>
             
-            <div className="mb-6 flex gap-4">
-              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filter by name or locality..." className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 outline-none focus:border-[#D97051]" />
+            {/* Filter Section */}
+            <div className="mb-6 rounded-2xl bg-[#FDF1EA] p-5 shadow-sm border border-[#1E2022]/10">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6 mb-4">
+                <div className="lg:col-span-2">
+                  <input 
+                    type="text" 
+                    value={search} 
+                    onChange={(e) => setSearch(e.target.value)} 
+                    placeholder="Filter by name or locality..." 
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#D97051]" 
+                  />
+                </div>
+                <div>
+                  <select 
+                    value={category} 
+                    onChange={(e) => setCategory(e.target.value)} 
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051]"
+                  >
+                    <option value="">All Categories</option>
+                    <option value="listing">Listings</option>
+                    <option value="rental">Rentals</option>
+                    <option value="project">Projects</option>
+                  </select>
+                </div>
+                <div>
+                  <select 
+                    value={propertyType} 
+                    onChange={(e) => setPropertyType(e.target.value)} 
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051] capitalize"
+                  >
+                    <option value="">All Types</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="villa">Villa</option>
+                    <option value="independent house">Independent House</option>
+                    <option value="plot">Plot</option>
+                    <option value="builder floor">Builder Floor</option>
+                  </select>
+                </div>
+                <div>
+                  <select 
+                    value={bedroom} 
+                    onChange={(e) => setBedroom(e.target.value)} 
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051]"
+                  >
+                    <option value="">Any BHK</option>
+                    <option value="1">1 BHK</option>
+                    <option value="2">2 BHK</option>
+                    <option value="3">3 BHK</option>
+                    <option value="4">4+ BHK</option>
+                  </select>
+                </div>
+                <div>
+                  <select 
+                    value={furnishing} 
+                    onChange={(e) => setFurnishing(e.target.value)} 
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051]"
+                  >
+                    <option value="">Any Furnishing</option>
+                    <option value="fully-furnished">Fully Furnished</option>
+                    <option value="semi-furnished">Semi Furnished</option>
+                    <option value="unfurnished">Unfurnished</option>
+                  </select>
+                </div>
+                <div>
+                  <select 
+                    value={facing} 
+                    onChange={(e) => setFacing(e.target.value)} 
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051] capitalize"
+                  >
+                    <option value="">Any Facing</option>
+                    <option value="east">East</option>
+                    <option value="west">West</option>
+                    <option value="north">North</option>
+                    <option value="south">South</option>
+                    <option value="north-east">North-East</option>
+                    <option value="north-west">North-West</option>
+                    <option value="south-east">South-East</option>
+                    <option value="south-west">South-West</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end border-t border-[#1E2022]/10 pt-4">
+                <button 
+                  onClick={clearFilters} 
+                  className="rounded-xl bg-white border border-gray-300 px-4 py-2 text-sm font-bold text-[#1E2022] hover:border-[#D97051] hover:text-[#D97051] transition"
+                >
+                  Clear Filters
+                </button>
+              </div>
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -94,7 +210,7 @@ export default function Favourites() {
                   </div>
                 );
               })}
-              {filteredFavourites.length === 0 && <div className="col-span-3 text-center text-gray-500 font-bold p-10">No favourites match your search.</div>}
+              {filteredFavourites.length === 0 && <div className="col-span-3 text-center text-gray-500 font-bold p-10">No favourites match your filters.</div>}
             </div>
           </div>
         )}
@@ -128,7 +244,7 @@ export default function Favourites() {
           
           <div className="grid grid-cols-4 gap-6 text-sm">
             <div className="font-bold text-gray-500 space-y-6 pt-32 text-right pr-4 border-r border-gray-100">
-              <p>Price</p><p>Area</p><p>Bedrooms</p><p>Furnishing</p><p>Property Type</p>
+              <p>Price</p><p>Area</p><p>Bedrooms</p><p>Furnishing</p><p>Property Type</p><p>Facing</p>
             </div>
             
             {compareList.map(p => {
@@ -136,9 +252,9 @@ export default function Favourites() {
               const isProject = p.__type === 'project' || String(p.project_id || p.id).startsWith("P") || p.project_status;
               
               return (
-                <div key={p.listing_id || p.id} className="space-y-6">
+                <div key={p.listing_id || p.project_id || p.id} className="space-y-6">
                   <img src={p.image_url || p.image || "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80"} className="h-28 w-full object-cover rounded-xl mb-4 shadow-sm" />
-                  <p className="font-bold text-lg line-clamp-2 leading-tight h-12">{p.apartment_name || p.name || p.title}</p>
+                  <p className="font-bold text-lg line-clamp-2 leading-tight h-12">{p.apartment_name || p.project_name || p.name || p.title}</p>
                   
                   <p className="font-bold text-lg text-[#D97051]">
                     {isRental ? `₹${(p.price || 0).toLocaleString("en-IN")} / mo` : formatPrice(p.price || p.price_min)}
@@ -147,6 +263,7 @@ export default function Favourites() {
                   <p className="font-medium">{p.bedroom || p.bhk || "N/A"} Beds</p>
                   <p className="capitalize font-medium">{p.furnishing?.replace("-", " ") || "N/A"}</p>
                   <p className="capitalize font-medium">{isRental ? `Rental ${p.property_type || ""}` : (isProject ? "Project" : p.property_type || "Property")}</p>
+                  <p className="capitalize font-medium">{p.facing_direction || "N/A"}</p>
                 </div>
               )
             })}

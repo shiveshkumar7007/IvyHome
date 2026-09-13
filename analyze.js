@@ -224,18 +224,19 @@ async function fetchAll(endpoint, token) {
 }
 
 /* =========================================================
-   DATA QUALITY
+   DATA QUALITY (EXPANDED WITH NEW FINDINGS)
 ========================================================= */
 
-function getCorruptionReasons(listing) {
+function getCorruptionReasons(listing, validProjectIds = new Set(), medianLocalityPsfMap = new Map()) {
   const reasons = [];
 
+  // 1. Zero or Negative Pricing (Updated from < 0 to <= 0)
   const price = safeNumber(listing.price);
-
-  if (price !== null && price < 0) {
-    reasons.push("negative_price");
+  if (price !== null && price <= 0) {
+    reasons.push("zero_or_negative_price");
   }
 
+  // 2. Carpet Area vs Super Built-up Inversion
   const carpet = areaInSqFt(listing, "carpet_area");
   const superBuilt = areaInSqFt(
     listing,
@@ -250,6 +251,7 @@ function getCorruptionReasons(listing) {
     reasons.push("carpet_area_greater_than_super_built_up_area");
   }
 
+  // 3. Floor vs Total Floors Inversion
   const floor = safeNumber(listing.floor);
   const totalFloors = safeNumber(listing.total_floors);
 
@@ -262,11 +264,48 @@ function getCorruptionReasons(listing) {
     reasons.push("floor_greater_than_total_floors");
   }
 
+  // 4. Sea-Plotted / Out-of-Bounds Coordinates Check
+  const lat = safeNumber(listing.latitude);
+  const lng = safeNumber(listing.longitude);
+  if (lat === null || lng === null || lat < 17 || lat > 20 || lng < 72 || lng > 75) {
+    reasons.push("sea_plotted_or_out_of_bounds_coordinates");
+  }
+
+  // 5. Phantom / Ghost Listings (Future Timestamps)
+  const rawDate = listing.created_at || listing.createdAt || listing.posted_at || listing.postedAt;
+  if (rawDate) {
+    const listingDate = new Date(rawDate);
+    if (!isNaN(listingDate.getTime()) && listingDate > REFERENCE) {
+      reasons.push("future_timestamp_ghost_listing");
+    }
+  }
+
+  // 6. Unlinked or Orphaned Projects
+  if (listing.project_id && validProjectIds.size > 0 && !validProjectIds.has(String(listing.project_id))) {
+    reasons.push("orphaned_project_reference");
+  }
+
+  // 7. Impossibly Small Area for Multi-BHK (< 150-200 sqft for 2+ BHK)
+  const bedrooms = safeNumber(listing.bedroom || listing.bhk);
+  if (bedrooms !== null && bedrooms >= 2 && carpet !== null && carpet < 150) {
+    reasons.push("impossibly_small_area_for_multibhk");
+  }
+
+  // 8. Price Outliers / Extreme Squatting (5x lower or higher than locality median price-per-sqft)
+  const loc = String(listing.locality || "").toLowerCase().trim();
+  const psf = getPricePerSqft(listing);
+  if (loc && psf !== null && medianLocalityPsfMap.has(loc)) {
+    const medianPsf = medianLocalityPsfMap.get(loc);
+    if (medianPsf > 0 && (psf < medianPsf / 5 || psf > medianPsf * 5)) {
+      reasons.push("extreme_price_per_sqft_outlier");
+    }
+  }
+
   return reasons;
 }
 
-function isCorrupt(listing) {
-  return getCorruptionReasons(listing).length > 0;
+function isCorrupt(listing, validProjectIds, medianLocalityPsfMap) {
+  return getCorruptionReasons(listing, validProjectIds, medianLocalityPsfMap).length > 0;
 }
 
 function getFakeMatches(listing) {
@@ -311,12 +350,6 @@ async function collectAuthEvidence() {
     password: DEMO_PASSWORD,
   });
 
-  /*
-    Documentation says API key is a query parameter.
-
-    Test the documented form WITHOUT X-API-Key header.
-  */
-
   const queryUrl = new URL(`${BASE_URL}/auth/login`);
   queryUrl.searchParams.set("api_key", API_KEY);
 
@@ -329,10 +362,6 @@ async function collectAuthEvidence() {
   });
 
   const documentedText = await documented.text();
-
-  /*
-    Actual working form: X-API-Key header.
-  */
 
   const actual = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
@@ -486,10 +515,6 @@ async function collectListingDetailEvidence(token) {
   console.log("EVIDENCE: LISTING DETAIL");
   console.log("=================================");
 
-  /*
-    Use an actual listing ID from the API/local dataset.
-  */
-
   const listingId = getListingId(listings[0]);
 
   const singular = await apiRequest(
@@ -536,12 +561,6 @@ async function collectFavouriteEvidence(token) {
   console.log("EVIDENCE: FAVOURITES");
   console.log("=================================");
 
-  /*
-    IMPORTANT:
-    Use an ID that actually exists in the live API,
-    rather than assuming listings.json is identical.
-  */
-
   const listingResponse = await apiRequest(
     "/v1/listings?limit=1&page=1",
     token
@@ -586,10 +605,6 @@ async function collectFavouriteEvidence(token) {
     `Actual {listing_id} status: ${actual.status}`
   );
 
-  /*
-    Cleanup if either POST succeeded.
-  */
-
   if (documented.ok || actual.ok) {
     await apiRequest(
       `/v1/favourites/${encodeURIComponent(listingId)}`,
@@ -618,11 +633,6 @@ async function collectFavouriteEvidence(token) {
       status: actual.status,
       response: actual.body,
     },
-
-    /*
-      We only call this a body-name discrepancy when
-      the documented body fails and the listing_id body succeeds.
-    */
 
     body_name_discrepancy:
       documented.status !== 200 &&
@@ -741,10 +751,6 @@ function collectProjectPriceEvidence(projects) {
       };
     });
 
-  /*
-    Always explicitly include P30394 if available.
-  */
-
   const p30394 = projects.find(
     (project) =>
       getProjectId(project) === "P30394"
@@ -797,14 +803,14 @@ function collectProjectPriceEvidence(projects) {
    CORRUPT LISTING EVIDENCE
 ========================================================= */
 
-function collectCorruptEvidence() {
+function collectCorruptEvidence(targetListings, validProjectIds, medianLocalityPsfMap) {
   console.log("\n=================================");
   console.log("EVIDENCE: CORRUPT LISTINGS");
   console.log("=================================");
 
-  const evidence = listings
-    .filter(isCorrupt)
-    .slice(0, 20)
+  const evidence = targetListings
+    .filter((l) => isCorrupt(l, validProjectIds, medianLocalityPsfMap))
+    .slice(0, 30)
     .map((listing) => {
       const rawCarpet = safeNumber(
         listing.carpet_area
@@ -818,13 +824,18 @@ function collectCorruptEvidence() {
         listing_id: getListingId(listing),
 
         reasons:
-          getCorruptionReasons(listing),
+          getCorruptionReasons(listing, validProjectIds, medianLocalityPsfMap),
 
         price: listing.price,
+
+        latitude: listing.latitude,
+        longitude: listing.longitude,
 
         floor: listing.floor,
 
         total_floors: listing.total_floors,
+
+        created_at: listing.created_at || listing.createdAt,
 
         carpet_area_raw: rawCarpet,
 
@@ -1080,9 +1091,29 @@ async function main() {
     token
   );
 
+  const validProjectIds = new Set(projects.map((p) => String(getProjectId(p))));
+
   console.log(
     `Total projects fetched: ${projects.length}`
   );
+
+  // Compute median Price-per-SqFt mapping per locality for outlier analysis
+  const localityPsfMap = new Map();
+  for (const l of listings) {
+    const loc = String(l.locality || "").toLowerCase().trim();
+    const psf = getPricePerSqft(l);
+    if (loc && psf !== null && psf > 0) {
+      if (!localityPsfMap.has(loc)) localityPsfMap.set(loc, []);
+      localityPsfMap.get(loc).push(psf);
+    }
+  }
+  const medianLocalityPsfMap = new Map();
+  for (const [loc, values] of localityPsfMap.entries()) {
+    values.sort((a, b) => a - b);
+    const mid = Math.floor(values.length / 2);
+    const median = values.length % 2 === 0 ? (values[mid - 1] + values[mid]) / 2 : values[mid];
+    medianLocalityPsfMap.set(loc, median);
+  }
 
   /* -------------------------------------------------------
      Q1 UNIQUE PROPERTIES
@@ -1111,7 +1142,7 @@ async function main() {
   ------------------------------------------------------- */
 
   const corruptListings =
-    listings.filter(isCorrupt);
+    listings.filter((l) => isCorrupt(l, validProjectIds, medianLocalityPsfMap));
 
   const corruptIds =
     corruptListings.map(getListingId);
@@ -1358,7 +1389,7 @@ async function main() {
     );
 
   const corruptEvidence =
-    collectCorruptEvidence();
+    collectCorruptEvidence(listings, validProjectIds, medianLocalityPsfMap);
 
   const fakeEvidence =
     collectFakeEvidence();

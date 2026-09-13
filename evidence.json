@@ -12,7 +12,7 @@
       "endpoint": "/auth/login",
       "header": "X-API-Key",
       "status": 200,
-      "response": "{\"access_token\":\"eyJleHAiOjE3ODkyNzgyNjksImlhdCI6MTc4OTI3NzM2OSwia2V5IjoiSVZZMjYtMDMyODA1N0VBRTJCIiwic3ViIjoiZGVtbzFAaXZ5LmhvbWVzIiwidHlwIjoiYWNjZXNzIn0.nBGgLMWJ-NXRsIPMETX1rDISLnbhxL2sI9HS2nhatzw\",\"refresh_token\":\"eyJleHAiOjE3ODk4ODIxNjksImlhdCI6MTc4OTI3NzM2OSwia2V5IjoiSVZZMjYtMDMyODA1N0VBRTJCIiwic3ViIjoiZGVtbzFAaXZ5LmhvbWVzIiwidHlwIjoicmVmcmVzaCJ9.sd42LAxZcykL54F7MoH-n8hZ00k4OBnolQ0cCb9j5GQ\",\"token_type\":\"Bearer\",\"expires_in\":900,\"refresh_url\":\"/auth/refresh\",\"user\":{\"email\":\"demo1@ivy.homes\"}}"
+      "response": "{\"access_token\":\"eyJleHAiOjE3ODkzMDY2MjUsImlhdCI6MTc4OTMwNTcyNSwia2V5IjoiSVZZMjYtMDMyODA1N0VBRTJCIiwic3ViIjoiZGVtbzFAaXZ5LmhvbWVzIiwidHlwIjoiYWNjZXNzIn0.hgeGCExzYz5uANC6gYBawneSpzjTQWOLgQTRYWug6ig\",\"refresh_token\":\"eyJleHAiOjE3ODk5MTA1MjUsImlhdCI6MTc4OTMwNTcyNSwia2V5IjoiSVZZMjYtMDMyODA1N0VBRTJCIiwic3ViIjoiZGVtbzFAaXZ5LmhvbWVzIiwidHlwIjoicmVmcmVzaCJ9.QMdV5EKGb-fzRAw5tuDlI3JS774O0vd9tmOtoYL1Y98\",\"token_type\":\"Bearer\",\"expires_in\":900,\"refresh_url\":\"/auth/refresh\",\"user\":{\"email\":\"demo1@ivy.homes\"}}"
     },
     "discrepancy": true
   },
@@ -289,14 +289,166 @@
     }
   ],
   "corrupt_listings": {
-    "total": 21,
+    "total": 492,
     "evidence": [
+      {
+        "listing_id": "MAG-3001756",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 16560000,
+        "latitude": 18.37141,
+        "longitude": 73.76799,
+        "floor": 0,
+        "total_floors": 0,
+        "carpet_area_raw": 2072,
+        "super_built_up_area_raw": 2072,
+        "carpet_area_sqft": 22303.01,
+        "super_built_up_area_sqft": 22303.01
+      },
+      {
+        "listing_id": "MAG-3000293",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 7500000,
+        "latitude": 18.66887,
+        "longitude": 73.99897,
+        "floor": 11,
+        "total_floors": 17,
+        "carpet_area_raw": 879,
+        "super_built_up_area_raw": 1176,
+        "carpet_area_sqft": 9461.56,
+        "super_built_up_area_sqft": 12658.46
+      },
+      {
+        "listing_id": "MAG-3001427",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 10930000,
+        "latitude": 18.49325,
+        "longitude": 73.96595,
+        "floor": 7,
+        "total_floors": 8,
+        "carpet_area_raw": 1287,
+        "super_built_up_area_raw": 1714,
+        "carpet_area_sqft": 13853.27,
+        "super_built_up_area_sqft": 18449.5
+      },
+      {
+        "listing_id": "MAG-3002378",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 11710000,
+        "latitude": 18.46561,
+        "longitude": 73.88985,
+        "floor": 12,
+        "total_floors": 31,
+        "carpet_area_raw": 1198,
+        "super_built_up_area_raw": 1659,
+        "carpet_area_sqft": 12895.27,
+        "super_built_up_area_sqft": 17857.48
+      },
+      {
+        "listing_id": "MAG-3001814",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 7120000,
+        "latitude": 18.39709,
+        "longitude": 73.92506,
+        "floor": 15,
+        "total_floors": 20,
+        "carpet_area_raw": 715,
+        "super_built_up_area_raw": 913,
+        "carpet_area_sqft": 7696.26,
+        "super_built_up_area_sqft": 9827.53
+      },
+      {
+        "listing_id": "MAG-3001178",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 13020000,
+        "latitude": 18.50103,
+        "longitude": 73.77862,
+        "floor": 4,
+        "total_floors": 7,
+        "carpet_area_raw": 1571,
+        "super_built_up_area_raw": 2062,
+        "carpet_area_sqft": 16910.24,
+        "super_built_up_area_sqft": 22195.37
+      },
+      {
+        "listing_id": "MAG-3000623",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 8710000,
+        "latitude": 18.55351,
+        "longitude": 73.71446,
+        "floor": 9,
+        "total_floors": 10,
+        "carpet_area_raw": 819,
+        "super_built_up_area_raw": 1131,
+        "carpet_area_sqft": 8815.72,
+        "super_built_up_area_sqft": 12174.08
+      },
+      {
+        "listing_id": "MAG-3002961",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 11740000,
+        "latitude": 18.42739,
+        "longitude": 73.76805,
+        "floor": 9,
+        "total_floors": 21,
+        "carpet_area_raw": 843,
+        "super_built_up_area_raw": 1148,
+        "carpet_area_sqft": 9074.05,
+        "super_built_up_area_sqft": 12357.07
+      },
+      {
+        "listing_id": "MAG-3002191",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 17320000,
+        "latitude": 18.49844,
+        "longitude": 73.97993,
+        "floor": 9,
+        "total_floors": 10,
+        "carpet_area_raw": 1282,
+        "super_built_up_area_raw": 1774,
+        "carpet_area_sqft": 13799.45,
+        "super_built_up_area_sqft": 19095.34
+      },
+      {
+        "listing_id": "MAG-3000987",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 18320000,
+        "latitude": 18.52649,
+        "longitude": 73.96014,
+        "floor": 22,
+        "total_floors": 25,
+        "carpet_area_raw": 1514,
+        "super_built_up_area_raw": 1958,
+        "carpet_area_sqft": 16296.7,
+        "super_built_up_area_sqft": 21075.91
+      },
       {
         "listing_id": "100-3003022",
         "reasons": [
-          "negative_price"
+          "zero_or_negative_price"
         ],
         "price": -7730000,
+        "latitude": 18.36775,
+        "longitude": 73.7158,
         "floor": 18,
         "total_floors": 28,
         "carpet_area_raw": 886,
@@ -307,9 +459,12 @@
       {
         "listing_id": "MAG-3000932",
         "reasons": [
-          "floor_greater_than_total_floors"
+          "floor_greater_than_total_floors",
+          "extreme_price_per_sqft_outlier"
         ],
         "price": 9300000,
+        "latitude": 18.61385,
+        "longitude": 73.98097,
         "floor": 11,
         "total_floors": 7,
         "carpet_area_raw": 840,
@@ -318,238 +473,274 @@
         "super_built_up_area_sqft": 12292.49
       },
       {
-        "listing_id": "100-3001548",
+        "listing_id": "MAG-3002347",
         "reasons": [
-          "floor_greater_than_total_floors"
+          "extreme_price_per_sqft_outlier"
         ],
-        "price": 3700000,
-        "floor": 41,
-        "total_floors": 31,
-        "carpet_area_raw": 318,
-        "super_built_up_area_raw": 442,
-        "carpet_area_sqft": 318,
-        "super_built_up_area_sqft": 442
-      },
-      {
-        "listing_id": "ZER-3000380",
-        "reasons": [
-          "carpet_area_greater_than_super_built_up_area"
-        ],
-        "price": 5520000,
-        "floor": 1,
-        "total_floors": 12,
-        "carpet_area_raw": 1060,
-        "super_built_up_area_raw": 699,
-        "carpet_area_sqft": 1060,
-        "super_built_up_area_sqft": 699
-      },
-      {
-        "listing_id": "100-3000174",
-        "reasons": [
-          "negative_price"
-        ],
-        "price": -8590000,
-        "floor": 2,
+        "price": 14070000,
+        "latitude": 18.6257,
+        "longitude": 73.78106,
+        "floor": 4,
         "total_floors": 14,
-        "carpet_area_raw": 831,
-        "super_built_up_area_raw": 1104,
-        "carpet_area_sqft": 831,
-        "super_built_up_area_sqft": 1104
+        "carpet_area_raw": 1494,
+        "super_built_up_area_raw": 2007,
+        "carpet_area_sqft": 16081.42,
+        "super_built_up_area_sqft": 21603.35
       },
       {
-        "listing_id": "DWE-3001307",
+        "listing_id": "MAG-3000554",
         "reasons": [
-          "floor_greater_than_total_floors"
+          "extreme_price_per_sqft_outlier"
         ],
-        "price": 9340000,
-        "floor": 43,
-        "total_floors": 29,
-        "carpet_area_raw": 791,
-        "super_built_up_area_raw": 1136,
-        "carpet_area_sqft": 791,
-        "super_built_up_area_sqft": 1136
-      },
-      {
-        "listing_id": "100-3001067",
-        "reasons": [
-          "floor_greater_than_total_floors"
-        ],
-        "price": 10160000,
-        "floor": 8,
-        "total_floors": 4,
-        "carpet_area_raw": 1198,
-        "super_built_up_area_raw": 1693,
-        "carpet_area_sqft": 1198,
-        "super_built_up_area_sqft": 1693
-      },
-      {
-        "listing_id": "SQU-3000591",
-        "reasons": [
-          "negative_price"
-        ],
-        "price": -15890000,
-        "floor": 12,
-        "total_floors": 24,
-        "carpet_area_raw": 1596,
-        "super_built_up_area_raw": 2234,
-        "carpet_area_sqft": 1596,
-        "super_built_up_area_sqft": 2234
-      },
-      {
-        "listing_id": "SQU-3000419",
-        "reasons": [
-          "negative_price"
-        ],
-        "price": -7140000,
-        "floor": 5,
+        "price": 8280000,
+        "latitude": 18.63733,
+        "longitude": 73.74121,
+        "floor": 7,
         "total_floors": 7,
-        "carpet_area_raw": 899,
-        "super_built_up_area_raw": 1222,
-        "carpet_area_sqft": 899,
-        "super_built_up_area_sqft": 1222
+        "carpet_area_raw": 1164,
+        "super_built_up_area_raw": 1501,
+        "carpet_area_sqft": 12529.3,
+        "super_built_up_area_sqft": 16156.76
       },
       {
-        "listing_id": "100-3002344",
+        "listing_id": "MAG-3000164",
         "reasons": [
-          "negative_price"
+          "extreme_price_per_sqft_outlier"
         ],
-        "price": -9730000,
-        "floor": 9,
-        "total_floors": 10,
-        "carpet_area_raw": 1126,
-        "super_built_up_area_raw": 1607,
-        "carpet_area_sqft": 1126,
-        "super_built_up_area_sqft": 1607
+        "price": 16410000,
+        "latitude": 18.64805,
+        "longitude": 74.01224,
+        "floor": 15,
+        "total_floors": 28,
+        "carpet_area_raw": 1175,
+        "super_built_up_area_raw": 1630,
+        "carpet_area_sqft": 12647.7,
+        "super_built_up_area_sqft": 17545.32
       },
       {
-        "listing_id": "MAG-3001986",
+        "listing_id": "MAG-3003104",
         "reasons": [
-          "negative_price"
+          "extreme_price_per_sqft_outlier"
         ],
-        "price": -10770000,
-        "floor": 2,
-        "total_floors": 21,
-        "carpet_area_raw": 144,
-        "super_built_up_area_raw": 187,
-        "carpet_area_sqft": 1550.02,
-        "super_built_up_area_sqft": 2012.87
-      },
-      {
-        "listing_id": "DWE-3003186",
-        "reasons": [
-          "floor_greater_than_total_floors"
-        ],
-        "price": 10130000,
-        "floor": 41,
-        "total_floors": 32,
-        "carpet_area_raw": 840,
-        "super_built_up_area_raw": 1152,
-        "carpet_area_sqft": 840,
-        "super_built_up_area_sqft": 1152
-      },
-      {
-        "listing_id": "DWE-3001849",
-        "reasons": [
-          "carpet_area_greater_than_super_built_up_area"
-        ],
-        "price": 7240000,
-        "floor": 2,
-        "total_floors": 20,
-        "carpet_area_raw": 1497,
-        "super_built_up_area_raw": 889,
-        "carpet_area_sqft": 1497,
-        "super_built_up_area_sqft": 889
-      },
-      {
-        "listing_id": "100-3000236",
-        "reasons": [
-          "carpet_area_greater_than_super_built_up_area"
-        ],
-        "price": 8490000,
-        "floor": 8,
-        "total_floors": 18,
-        "carpet_area_raw": 1812,
-        "super_built_up_area_raw": 1262,
-        "carpet_area_sqft": 1812,
-        "super_built_up_area_sqft": 1262
-      },
-      {
-        "listing_id": "100-3000608",
-        "reasons": [
-          "carpet_area_greater_than_super_built_up_area"
-        ],
-        "price": 8750000,
+        "price": 15970000,
+        "latitude": 18.66733,
+        "longitude": 73.86098,
         "floor": 5,
+        "total_floors": 32,
+        "carpet_area_raw": 1488,
+        "super_built_up_area_raw": 2138,
+        "carpet_area_sqft": 16016.83,
+        "super_built_up_area_sqft": 23013.43
+      },
+      {
+        "listing_id": "MAG-3003171",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 4220000,
+        "latitude": 18.49147,
+        "longitude": 73.95981,
+        "floor": 0,
+        "total_floors": 21,
+        "carpet_area_raw": 853,
+        "super_built_up_area_raw": 1186,
+        "carpet_area_sqft": 9181.69,
+        "super_built_up_area_sqft": 12766.1
+      },
+      {
+        "listing_id": "100-3002878",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 12220,
+        "latitude": 18.37815,
+        "longitude": 73.89937,
+        "floor": 26,
+        "total_floors": 30,
+        "carpet_area_raw": 1201,
+        "super_built_up_area_raw": 1666,
+        "carpet_area_sqft": 1201,
+        "super_built_up_area_sqft": 1666
+      },
+      {
+        "listing_id": "MAG-3001920",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 7890000,
+        "latitude": 18.66454,
+        "longitude": 73.97427,
+        "floor": 14,
+        "total_floors": 16,
+        "carpet_area_raw": 1286,
+        "super_built_up_area_raw": 1679,
+        "carpet_area_sqft": 13842.5,
+        "super_built_up_area_sqft": 18072.76
+      },
+      {
+        "listing_id": "MAG-3002486",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 17540000,
+        "latitude": 18.38199,
+        "longitude": 73.82061,
+        "floor": 7,
+        "total_floors": 17,
+        "carpet_area_raw": 1507,
+        "super_built_up_area_raw": 2016,
+        "carpet_area_sqft": 16221.35,
+        "super_built_up_area_sqft": 21700.22
+      },
+      {
+        "listing_id": "MAG-3001748",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 9190000,
+        "latitude": 18.49576,
+        "longitude": 73.88499,
+        "floor": 0,
+        "total_floors": 11,
+        "carpet_area_raw": 711,
+        "super_built_up_area_raw": 959,
+        "carpet_area_sqft": 7653.2,
+        "super_built_up_area_sqft": 10322.68
+      },
+      {
+        "listing_id": "MAG-3000126",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 13260000,
+        "latitude": 18.49265,
+        "longitude": 73.91894,
+        "floor": 5,
+        "total_floors": 8,
+        "carpet_area_raw": 1667,
+        "super_built_up_area_raw": 2333,
+        "carpet_area_sqft": 17943.59,
+        "super_built_up_area_sqft": 25112.41
+      },
+      {
+        "listing_id": "MAG-3002666",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 18290000,
+        "latitude": 18.41342,
+        "longitude": 73.71619,
+        "floor": 0,
+        "total_floors": 0,
+        "carpet_area_raw": 2750,
+        "super_built_up_area_raw": 2750,
+        "carpet_area_sqft": 29601,
+        "super_built_up_area_sqft": 29601
+      },
+      {
+        "listing_id": "MAG-3003459",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 19740000,
+        "latitude": 18.56102,
+        "longitude": 73.8021,
+        "floor": 0,
+        "total_floors": 0,
+        "carpet_area_raw": 2458,
+        "super_built_up_area_raw": 2458,
+        "carpet_area_sqft": 26457.91,
+        "super_built_up_area_sqft": 26457.91
+      },
+      {
+        "listing_id": "MAG-3000771",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 5240000,
+        "latitude": 18.46441,
+        "longitude": 73.72592,
+        "floor": 10,
+        "total_floors": 27,
+        "carpet_area_raw": 418,
+        "super_built_up_area_raw": 594,
+        "carpet_area_sqft": 4499.35,
+        "super_built_up_area_sqft": 6393.82
+      },
+      {
+        "listing_id": "MAG-3002640",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 7880000,
+        "latitude": 18.5097,
+        "longitude": 73.91142,
+        "floor": 12,
+        "total_floors": 15,
+        "carpet_area_raw": 745,
+        "super_built_up_area_raw": 937,
+        "carpet_area_sqft": 8019.18,
+        "super_built_up_area_sqft": 10085.87
+      },
+      {
+        "listing_id": "MAG-3000012",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 7910,
+        "latitude": 18.63644,
+        "longitude": 73.94976,
+        "floor": 12,
+        "total_floors": 19,
+        "carpet_area_raw": 1136,
+        "super_built_up_area_raw": 1496,
+        "carpet_area_sqft": 12227.9,
+        "super_built_up_area_sqft": 16102.94
+      },
+      {
+        "listing_id": "MAG-3001350",
+        "reasons": [
+          "extreme_price_per_sqft_outlier"
+        ],
+        "price": 13080000,
+        "latitude": 18.65051,
+        "longitude": 73.83053,
+        "floor": 3,
         "total_floors": 6,
-        "carpet_area_raw": 1729,
-        "super_built_up_area_raw": 1206,
-        "carpet_area_sqft": 1729,
-        "super_built_up_area_sqft": 1206
+        "carpet_area_raw": 895,
+        "super_built_up_area_raw": 1246,
+        "carpet_area_sqft": 9633.78,
+        "super_built_up_area_sqft": 13411.94
       },
       {
-        "listing_id": "SQU-3001698",
+        "listing_id": "MAG-3000644",
         "reasons": [
-          "floor_greater_than_total_floors"
+          "extreme_price_per_sqft_outlier"
         ],
-        "price": 8170000,
-        "floor": 34,
-        "total_floors": 20,
-        "carpet_area_raw": 764,
-        "super_built_up_area_raw": 1077,
-        "carpet_area_sqft": 764,
-        "super_built_up_area_sqft": 1077
+        "price": 20400000,
+        "latitude": 18.49373,
+        "longitude": 73.71981,
+        "floor": 1,
+        "total_floors": 24,
+        "carpet_area_raw": 1515,
+        "super_built_up_area_raw": 2188,
+        "carpet_area_sqft": 16307.46,
+        "super_built_up_area_sqft": 23551.63
       },
       {
-        "listing_id": "MAG-3001979",
+        "listing_id": "MAG-3002599",
         "reasons": [
-          "negative_price"
+          "extreme_price_per_sqft_outlier"
         ],
-        "price": -11500000,
+        "price": 27270000,
+        "latitude": 18.37707,
+        "longitude": 74.01126,
         "floor": 12,
         "total_floors": 16,
-        "carpet_area_raw": 885,
-        "super_built_up_area_raw": 1252,
-        "carpet_area_sqft": 9526.14,
-        "super_built_up_area_sqft": 13476.53
-      },
-      {
-        "listing_id": "DWE-3000235",
-        "reasons": [
-          "carpet_area_greater_than_super_built_up_area"
-        ],
-        "price": 8740000,
-        "floor": 4,
-        "total_floors": 27,
-        "carpet_area_raw": 1788,
-        "super_built_up_area_raw": 1066,
-        "carpet_area_sqft": 1788,
-        "super_built_up_area_sqft": 1066
-      },
-      {
-        "listing_id": "MAG-3001263",
-        "reasons": [
-          "carpet_area_greater_than_super_built_up_area"
-        ],
-        "price": 9860000,
-        "floor": 0,
-        "total_floors": 6,
-        "carpet_area_raw": 153,
-        "super_built_up_area_raw": 102,
-        "carpet_area_sqft": 1646.89,
-        "super_built_up_area_sqft": 1097.93
-      },
-      {
-        "listing_id": "DWE-3000299",
-        "reasons": [
-          "carpet_area_greater_than_super_built_up_area"
-        ],
-        "price": 15920000,
-        "floor": 9,
-        "total_floors": 12,
-        "carpet_area_raw": 2398,
-        "super_built_up_area_raw": 1600,
-        "carpet_area_sqft": 2398,
-        "super_built_up_area_sqft": 1600
+        "carpet_area_raw": 1985,
+        "super_built_up_area_raw": 2802,
+        "carpet_area_sqft": 21366.54,
+        "super_built_up_area_sqft": 30160.73
       }
     ]
   },

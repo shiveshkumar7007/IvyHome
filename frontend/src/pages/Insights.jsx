@@ -18,15 +18,19 @@ import {
 } from "lucide-react";
 import { formatPrice } from "../utils/helpers";
 import { useToast } from "../context/ToastContext";
-import { getAllListings } from "../api/ivyApi";
+import { getAllListings, getAllRentals, getAllProjects } from "../api/ivyApi";
 
 export default function Insights() {
   const [rawListings, setRawListings] = useState([]);
+  const [rawRentals, setRawRentals] = useState([]);
+  const [rawProjects, setRawProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingText, setLoadingText] = useState("Loading complete dataset corpus into memory...");
+  const [loadingText, setLoadingText] = useState("Loading complete database corpora into memory...");
   const [error, setError] = useState("");
   const { showToast } = useToast();
   
+  // Filter States
+  const [selectedDataset, setSelectedDataset] = useState("all"); // all, listing, rental, project
   const [selectedLocality, setSelectedLocality] = useState("all");
   const [selectedPropertyType, setSelectedPropertyType] = useState("all");
   const [activeOnly, setActiveOnly] = useState(false);
@@ -38,10 +42,17 @@ export default function Insights() {
       try {
         setLoading(true);
         setError("");
-        setLoadingText("Fetching full listing records across all offsets...");
+        setLoadingText("Fetching full datasets for listings, rentals, and projects...");
 
-        const fullListings = await getAllListings();
-        setRawListings(fullListings || []);
+        const [listingsData, rentalsData, projectsData] = await Promise.all([
+          getAllListings(),
+          getAllRentals(),
+          getAllProjects()
+        ]);
+
+        setRawListings((listingsData || []).map(item => ({ ...item, __datasetType: 'listing' })));
+        setRawRentals((rentalsData || []).map(item => ({ ...item, __datasetType: 'rental', price: item.monthly_rent || item.price })));
+        setRawProjects((projectsData || []).map(item => ({ ...item, __datasetType: 'project', price: item.price_min || item.price })));
       } catch (err) {
         setError(err.message || "Unable to load market intelligence data");
       } finally {
@@ -51,27 +62,32 @@ export default function Insights() {
     loadFullData();
   }, []);
 
+  // Combine all datasets for dropdown discovery & global view
+  const combinedCorpus = useMemo(() => {
+    return [...rawListings, ...rawRentals, ...rawProjects];
+  }, [rawListings, rawRentals, rawProjects]);
+
   const localities = useMemo(() => {
     const locSet = new Set();
-    rawListings.forEach((item) => {
+    combinedCorpus.forEach((item) => {
       if (item.locality) locSet.add(item.locality.toLowerCase().trim());
     });
     return Array.from(locSet).sort();
-  }, [rawListings]);
+  }, [combinedCorpus]);
 
   const propertyTypesList = useMemo(() => {
     const typeSet = new Set();
-    rawListings.forEach((item) => {
+    combinedCorpus.forEach((item) => {
       if (item.property_type) typeSet.add(item.property_type.toLowerCase().trim());
     });
     return Array.from(typeSet).sort();
-  }, [rawListings]);
+  }, [combinedCorpus]);
 
   const auditData = useMemo(() => {
     const scamList = [];
     const corruptList = [];
 
-    rawListings.forEach((l) => {
+    combinedCorpus.forEach((l) => {
       const desc = String(l.description || "").toLowerCase();
       if (desc.includes("token amount") || desc.includes("booking amount") || desc.includes("site visit only after")) {
         scamList.push({ ...l, flagReason: "Demands upfront payment before viewing" });
@@ -91,11 +107,14 @@ export default function Insights() {
     });
 
     return { scamList, corruptList };
-  }, [rawListings]);
+  }, [combinedCorpus]);
 
   const filteredMetrics = useMemo(() => {
-    let dataset = rawListings;
+    let dataset = combinedCorpus;
 
+    if (selectedDataset !== "all") {
+      dataset = dataset.filter((l) => l.__datasetType === selectedDataset);
+    }
     if (selectedLocality !== "all") {
       dataset = dataset.filter((l) => String(l.locality || "").toLowerCase().trim() === selectedLocality);
     }
@@ -107,15 +126,15 @@ export default function Insights() {
     }
 
     const excludedIds = new Set([
-      ...auditData.scamList.map((l) => l.listing_id || l.id),
-      ...auditData.corruptList.map((l) => l.listing_id || l.id)
+      ...auditData.scamList.map((l) => l.listing_id || l.project_id || l.id),
+      ...auditData.corruptList.map((l) => l.listing_id || l.project_id || l.id)
     ]);
 
     if (excludeCorrupt) {
-      dataset = dataset.filter((l) => !excludedIds.has(l.listing_id || l.id));
+      dataset = dataset.filter((l) => !excludedIds.has(l.listing_id || l.project_id || l.id));
     }
 
-    const activeListings = dataset.filter((l) => l.is_live === true || l.is_live === "true" || l.is_live === 1);
+    const activeListings = dataset.filter((l) => l.is_live === true || l.is_live === "true" || l.is_live === 1 || l.__datasetType === 'project' || l.__datasetType === 'rental');
     
     const pricedPrices = activeListings.filter((l) => Number(l.price) > 0).map((l) => Number(l.price)).sort((a, b) => a - b);
     const medianPrice = pricedPrices.length > 0 ? pricedPrices[Math.floor(pricedPrices.length / 2)] : 0;
@@ -156,7 +175,7 @@ export default function Insights() {
 
     const propertyTypes = {};
     dataset.forEach((l) => {
-      const type = l.property_type ? l.property_type.toLowerCase() : "other";
+      const type = l.property_type ? l.property_type.toLowerCase() : (l.__datasetType || "other");
       propertyTypes[type] = (propertyTypes[type] || 0) + 1;
     });
 
@@ -171,17 +190,18 @@ export default function Insights() {
       bhkDistribution,
       propertyTypes
     };
-  }, [rawListings, selectedLocality, selectedPropertyType, activeOnly, excludeCorrupt, auditData]);
+  }, [combinedCorpus, selectedDataset, selectedLocality, selectedPropertyType, activeOnly, excludeCorrupt, auditData]);
 
   const exportToCSV = () => {
     if (!filteredMetrics) return;
     const rows = [
       ["Metric", "Value"],
+      ["Dataset Category", selectedDataset.toUpperCase()],
       ["Total Evaluated Records", filteredMetrics.totalCount],
-      ["Active Listings", filteredMetrics.activeCount],
+      ["Active / Valid Units", filteredMetrics.activeCount],
       ["Scam Listings Blocked", auditData.scamList.length],
       ["Corrupt / Zero / Negative Records Flagged", auditData.corruptList.length],
-      ["Median Price", filteredMetrics.medianPrice],
+      ["Median Price / Rent", filteredMetrics.medianPrice],
       ["Avg 1BHK Price/Sqft", filteredMetrics.sqftByBhk["1 BHK"]],
       ["Avg 2BHK Price/Sqft", filteredMetrics.sqftByBhk["2 BHK"]],
       ["Avg 3BHK Price/Sqft", filteredMetrics.sqftByBhk["3 BHK"]],
@@ -191,7 +211,7 @@ export default function Insights() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "ivyhomes_corpus_audit.csv");
+    link.setAttribute("download", `ivyhomes_${selectedDataset}_audit.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -204,10 +224,10 @@ export default function Insights() {
         
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#1E2022]/10 pb-6">
           <div>
-            <p className="mb-1 text-sm font-bold uppercase tracking-wider text-[#D97051]">Executive BI Workspace</p>
+            <p className="mb-1 text-sm font-bold uppercase tracking-wider text-[#D97051]">Dashboard</p>
             <h1 className="text-3xl font-extrabold tracking-tight text-[#1E2022] sm:text-4xl">Full Market Intelligence & Audit</h1>
             <p className="mt-1 text-sm text-[#1E2022]/60">
-              Interactive analytics engine processing 100% of downloaded database records with real-time audit tracing.
+              Interactive analytics engine processing listings, rentals, and projects corpus with real-time audit tracing.
             </p>
           </div>
 
@@ -217,6 +237,18 @@ export default function Insights() {
                 <Filter size={16} className="text-[#D97051]" />
                 Filters:
               </div>
+
+              {/* Dataset Type Filter (Listings, Rentals, Projects) */}
+              <select
+                value={selectedDataset}
+                onChange={(e) => setSelectedDataset(e.target.value)}
+                className="bg-[#FDF1EA] border border-[#D97051]/30 text-[#D97051] text-sm rounded-xl px-3 py-1.5 outline-none font-bold capitalize"
+              >
+                <option value="all">All Datasets ({combinedCorpus.length})</option>
+                <option value="listing">Listings ({rawListings.length})</option>
+                <option value="rental">Rentals ({rawRentals.length})</option>
+                <option value="project">Projects ({rawProjects.length})</option>
+              </select>
 
               {/* Locality Filter */}
               <select
@@ -252,20 +284,16 @@ export default function Insights() {
                 Active Only
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer border-l border-gray-200 pl-3 text-sm font-semibold text-[#1E2022]" title="Excludes listings with zero, negative, or invalid pricing parameters">
+              <label className="flex items-center gap-2 cursor-pointer border-l border-gray-200 pl-3 text-sm font-semibold text-[#1E2022]" title="Excludes records with zero, negative, or invalid pricing parameters">
                 <input
                   type="checkbox"
                   checked={excludeCorrupt}
                   onChange={(e) => setExcludeCorrupt(e.target.checked)}
                   className="h-4 w-4 accent-orange-500 rounded"
                 />
-                Exclude Corrupt / Zero Prices
+                Exclude Corrupt / Zero
               </label>
             </div>
-            
-            <button onClick={exportToCSV} className="flex h-full items-center gap-2 rounded-2xl bg-[#1E2022] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#D97051] shadow-sm">
-              <Download size={16} /> Export CSV
-            </button>
           </div>
         </div>
 
@@ -285,14 +313,15 @@ export default function Insights() {
               <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
                 <TrendingUp size={16} className="text-[#D97051]" />
                 Primary KPI Indicators 
+                {selectedDataset !== "all" && ` — Dataset: ${selectedDataset.toUpperCase()}`}
                 {selectedLocality !== "all" && ` — Locality: ${selectedLocality}`} 
                 {selectedPropertyType !== "all" && ` — Type: ${selectedPropertyType}`}
-                {excludeCorrupt && ` (Excluding Corrupt/Zero Prices)`}
+                {excludeCorrupt && ` (Excluding Corrupt/Zero)`}
               </h2>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase">Evaluated Units</span>
+                    <span className="text-xs font-bold text-gray-400 uppercase">Evaluated Records</span>
                     <div className="p-2 bg-gray-50 rounded-xl"><Database size={18} className="text-gray-500" /></div>
                   </div>
                   <p className="text-3xl font-extrabold text-[#1E2022]">{filteredMetrics.totalCount.toLocaleString()}</p>
@@ -300,7 +329,7 @@ export default function Insights() {
 
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase">Live Listings</span>
+                    <span className="text-xs font-bold text-gray-400 uppercase">Active / Valid Units</span>
                     <div className="p-2 bg-green-50 rounded-xl"><Home size={18} className="text-green-500" /></div>
                   </div>
                   <p className="text-3xl font-extrabold text-green-600">{filteredMetrics.activeCount.toLocaleString()}</p>
@@ -308,10 +337,12 @@ export default function Insights() {
 
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase">Median Price</span>
+                    <span className="text-xs font-bold text-gray-400 uppercase">Median Price / Rent</span>
                     <div className="p-2 bg-blue-50 rounded-xl"><TrendingUp size={18} className="text-blue-500" /></div>
                   </div>
-                  <p className="text-3xl font-extrabold text-[#1E2022]">{formatPrice(filteredMetrics.medianPrice)}</p>
+                  <p className="text-3xl font-extrabold text-[#1E2022]">
+                    {selectedDataset === 'rental' ? `₹${(filteredMetrics.medianPrice || 0).toLocaleString("en-IN")} /mo` : formatPrice(filteredMetrics.medianPrice)}
+                  </p>
                 </div>
 
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
@@ -344,7 +375,7 @@ export default function Insights() {
                     <div className="p-2 bg-rose-50 rounded-xl"><MapPin size={18} className="text-rose-600" /></div>
                   </div>
                   <p className="text-sm font-bold text-[#1E2022] capitalize">
-                    Locality: <span className="text-[#D97051]">{selectedLocality}</span> | Type: <span className="text-[#D97051]">{selectedPropertyType}</span>
+                    Dataset: <span className="text-[#D97051]">{selectedDataset}</span> | Locality: <span className="text-[#D97051]">{selectedLocality}</span> | Type: <span className="text-[#D97051]">{selectedPropertyType}</span>
                   </p>
                 </div>
               </div>
@@ -432,7 +463,7 @@ export default function Insights() {
               </div>
               <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
                 <div 
-                  onClick={() => setInspectModal({ title: "Flagged Fraudulent / Advance-Payment Listings", items: auditData.scamList })} 
+                  onClick={() => setInspectModal({ title: "Flagged Fraudulent / Advance-Payment Records", items: auditData.scamList })} 
                   className={`rounded-2xl p-6 shadow-sm border border-gray-200 border-l-4 border-l-red-500 cursor-pointer transition hover:-translate-y-1 hover:shadow-md ${auditData.scamList.length > 0 ? 'bg-red-50/70 border-red-300' : 'bg-white'}`}
                 >
                   <div className="flex justify-between items-start mb-2"><span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Advance Fee Scams</span><ShieldAlert size={20} className="text-red-500" /></div>
@@ -443,7 +474,7 @@ export default function Insights() {
                       <span className="inline-block px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded-md">Anomaly: Upfront Token Demand</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-1 text-xs font-bold text-red-600"><Eye size={14} /> Inspect listings</div>
+                  <div className="flex items-center gap-1 text-xs font-bold text-red-600"><Eye size={14} /> Inspect records</div>
                 </div>
 
                 <div 
@@ -458,7 +489,7 @@ export default function Insights() {
                       <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-800 text-[10px] font-bold rounded-md">Anomaly: Invalid Pricing / Floor Logic</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-1 text-xs font-bold text-orange-600"><Eye size={14} /> Inspect listings</div>
+                  <div className="flex items-center gap-1 text-xs font-bold text-orange-600"><Eye size={14} /> Inspect records</div>
                 </div>
               </div>
             </section>
@@ -481,13 +512,13 @@ export default function Insights() {
 
               <div className="p-5 overflow-y-auto divide-y divide-gray-100">
                 {inspectModal.items.map((item, idx) => (
-                  <div key={item.listing_id || idx} className="py-3 flex flex-col gap-1">
+                  <div key={item.listing_id || item.project_id || idx} className="py-3 flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold bg-[#FDF1EA] text-[#D97051] px-2 py-0.5 rounded-md">{item.listing_id || item.id}</span>
+                      <span className="font-mono text-xs font-bold bg-[#FDF1EA] text-[#D97051] px-2 py-0.5 rounded-md">{item.listing_id || item.project_id || item.id}</span>
                       <span className="text-xs font-bold text-red-500">{item.flagReason}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <p className="font-bold text-[#1E2022]">{item.apartment_name || "Property Listing"}</p>
+                      <p className="font-bold text-[#1E2022]">{item.apartment_name || item.project_name || item.name || "Property Record"}</p>
                       <span className="font-bold text-gray-600">{formatPrice(item.price)}</span>
                     </div>
                     {item.description && (

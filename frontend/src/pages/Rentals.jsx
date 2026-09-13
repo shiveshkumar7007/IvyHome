@@ -14,10 +14,14 @@ export default function Rentals() {
   const [selectedListing, setSelectedListing] = useState(null);
   const [favourites, setFavourites] = useState([]);
 
+  // Filter States
   const [search, setSearch] = useState("");
+  const [propertyType, setPropertyType] = useState("");
   const [bedroom, setBedroom] = useState("");
   const [furnishing, setFurnishing] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [parking, setParking] = useState("");
+  const [facing, setFacing] = useState("");
   const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
@@ -72,6 +76,9 @@ export default function Rentals() {
         (item.apartment_name || "").toLowerCase().includes(q)
       );
     }
+    if (propertyType) {
+      result = result.filter(item => (item.property_type || "").toLowerCase() === propertyType.toLowerCase());
+    }
     if (bedroom) {
       result = result.filter(item => Number(item.bedroom) === Number(bedroom));
     }
@@ -80,6 +87,12 @@ export default function Rentals() {
     }
     if (maxPrice) {
       result = result.filter(item => Number(item.price) <= Number(maxPrice));
+    }
+    if (parking !== "") {
+      result = result.filter(item => Number(item.covered_parking || 0) >= Number(parking));
+    }
+    if (facing) {
+      result = result.filter(item => (item.facing_direction || "").toLowerCase() === facing.toLowerCase());
     }
 
     if (sortBy === "price-asc") {
@@ -91,13 +104,16 @@ export default function Rentals() {
     }
 
     return result.map(item => ({ ...item, __type: 'rental' }));
-  }, [allRentals, search, bedroom, furnishing, maxPrice, sortBy]);
+  }, [allRentals, search, propertyType, bedroom, furnishing, maxPrice, parking, facing, sortBy]);
 
   const clearFilters = () => {
     setSearch("");
+    setPropertyType("");
     setBedroom("");
     setFurnishing("");
     setMaxPrice("");
+    setParking("");
+    setFacing("");
     setSortBy("default");
   };
 
@@ -236,8 +252,8 @@ export default function Rentals() {
         <h1 className="text-3xl font-bold mb-8 text-[#1E2022]">Rental Properties</h1>
         
         <section className="mb-8 rounded-2xl bg-[#FDF1EA] p-5 shadow-sm border border-[#1E2022]/10">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-4">
-            <div className="lg:col-span-2">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
+            <div>
               <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Search Locality</label>
               <input 
                 type="text" 
@@ -246,6 +262,20 @@ export default function Rentals() {
                 placeholder="e.g. viman nagar..." 
                 className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#D97051]" 
               />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Property Type</label>
+              <select 
+                value={propertyType} 
+                onChange={(e) => setPropertyType(e.target.value)} 
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051] capitalize"
+              >
+                <option value="">All Types</option>
+                <option value="apartment">Apartment</option>
+                <option value="independent house">Independent House</option>
+                <option value="villa">Villa</option>
+                <option value="builder floor">Builder Floor</option>
+              </select>
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Bedrooms</label>
@@ -286,6 +316,36 @@ export default function Rentals() {
                 <option value="50000">₹50,000</option>
                 <option value="75000">₹75,000</option>
                 <option value="100000">₹1,00,000+</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Parking Slots</label>
+              <select 
+                value={parking} 
+                onChange={(e) => setParking(e.target.value)} 
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051]"
+              >
+                <option value="">Any parking</option>
+                <option value="1">1+ Slot</option>
+                <option value="2">2+ Slots</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Facing Direction</label>
+              <select 
+                value={facing} 
+                onChange={(e) => setFacing(e.target.value)} 
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051] capitalize"
+              >
+                <option value="">Any direction</option>
+                <option value="east">East</option>
+                <option value="west">West</option>
+                <option value="north">North</option>
+                <option value="south">South</option>
+                <option value="north-east">North-East</option>
+                <option value="north-west">North-West</option>
+                <option value="south-east">South-East</option>
+                <option value="south-west">South-West</option>
               </select>
             </div>
           </div>

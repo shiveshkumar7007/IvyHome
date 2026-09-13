@@ -1,7 +1,9 @@
-let cache = null;
+let listingsCache = null;
+let rentalsCache = null;
+let projectsCache = null;
 
 export async function getLocalListings() {
-  if (cache) return cache;
+  if (listingsCache) return listingsCache;
 
   const response = await fetch("/listings.json");
 
@@ -11,11 +13,47 @@ export async function getLocalListings() {
 
   const data = await response.json();
 
-  cache = Array.isArray(data)
+  listingsCache = Array.isArray(data)
     ? data
     : data.listings || data.results || [];
 
-  return cache;
+  return listingsCache;
+}
+
+export async function getLocalRentals() {
+  if (rentalsCache) return rentalsCache;
+
+  const response = await fetch("/rentals.json");
+
+  if (!response.ok) {
+    throw new Error("Could not load rentals.json");
+  }
+
+  const data = await response.json();
+
+  rentalsCache = Array.isArray(data)
+    ? data
+    : data.rentals || data.results || [];
+
+  return rentalsCache;
+}
+
+export async function getLocalProjects() {
+  if (projectsCache) return projectsCache;
+
+  const response = await fetch("/projects.json");
+
+  if (!response.ok) {
+    throw new Error("Could not load projects.json");
+  }
+
+  const data = await response.json();
+
+  projectsCache = Array.isArray(data)
+    ? data
+    : data.projects || data.results || [];
+
+  return projectsCache;
 }
 
 export function formatPrice(value) {

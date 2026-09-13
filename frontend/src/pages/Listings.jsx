@@ -14,11 +14,14 @@ export default function Listings() {
   const [selectedListing, setSelectedListing] = useState(null);
   const [favourites, setFavourites] = useState([]);
 
+  // Filter States
   const [search, setSearch] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [bedroom, setBedroom] = useState("");
   const [furnishing, setFurnishing] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [parking, setParking] = useState("");
+  const [facing, setFacing] = useState("");
   const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
@@ -85,6 +88,12 @@ export default function Listings() {
     if (maxPrice) {
       result = result.filter(item => Number(item.price) <= Number(maxPrice));
     }
+    if (parking !== "") {
+      result = result.filter(item => Number(item.covered_parking || 0) >= Number(parking));
+    }
+    if (facing) {
+      result = result.filter(item => (item.facing_direction || "").toLowerCase() === facing.toLowerCase());
+    }
 
     if (sortBy === "price-asc") {
       result.sort((a, b) => Number(a.price) - Number(b.price));
@@ -95,7 +104,7 @@ export default function Listings() {
     }
 
     return result.map(item => ({ ...item, __type: 'listing' }));
-  }, [allListings, search, propertyType, bedroom, furnishing, maxPrice, sortBy]);
+  }, [allListings, search, propertyType, bedroom, furnishing, maxPrice, parking, facing, sortBy]);
 
   const clearFilters = () => {
     setSearch("");
@@ -103,6 +112,8 @@ export default function Listings() {
     setBedroom("");
     setFurnishing("");
     setMaxPrice("");
+    setParking("");
+    setFacing("");
     setSortBy("default");
   };
 
@@ -241,8 +252,8 @@ export default function Listings() {
         <h1 className="text-3xl font-bold mb-8 text-[#1E2022]">Find your next home</h1>
         
         <section className="mb-8 rounded-2xl bg-[#FDF1EA] p-5 shadow-sm border border-[#1E2022]/10">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6 mb-4">
-            <div className="lg:col-span-2">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
+            <div>
               <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Search Locality</label>
               <input 
                 type="text" 
@@ -306,6 +317,36 @@ export default function Listings() {
                 <option value="10000000">₹1 Cr</option>
                 <option value="20000000">₹2 Cr</option>
                 <option value="50000000">₹5 Cr</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Parking Slots</label>
+              <select 
+                value={parking} 
+                onChange={(e) => setParking(e.target.value)} 
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051]"
+              >
+                <option value="">Any parking</option>
+                <option value="1">1+ Slot</option>
+                <option value="2">2+ Slots</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Facing Direction</label>
+              <select 
+                value={facing} 
+                onChange={(e) => setFacing(e.target.value)} 
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051] capitalize"
+              >
+                <option value="">Any direction</option>
+                <option value="east">East</option>
+                <option value="west">West</option>
+                <option value="north">North</option>
+                <option value="south">South</option>
+                <option value="north-east">North-East</option>
+                <option value="north-west">North-West</option>
+                <option value="south-east">South-East</option>
+                <option value="south-west">South-West</option>
               </select>
             </div>
           </div>
