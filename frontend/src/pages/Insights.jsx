@@ -5,8 +5,7 @@ import {
   TrendingUp, 
   Ruler, 
   ShieldAlert, 
-  AlertTriangle, 
-  AlertCircle,
+  AlertTriangle,
   BadgeCheck,
   UserCheck,
   MapPin,
@@ -29,7 +28,9 @@ export default function Insights() {
   const { showToast } = useToast();
   
   const [selectedLocality, setSelectedLocality] = useState("all");
+  const [selectedPropertyType, setSelectedPropertyType] = useState("all");
   const [activeOnly, setActiveOnly] = useState(false);
+  const [excludeCorrupt, setExcludeCorrupt] = useState(false);
   const [inspectModal, setInspectModal] = useState(null);
 
   useEffect(() => {
@@ -58,10 +59,17 @@ export default function Insights() {
     return Array.from(locSet).sort();
   }, [rawListings]);
 
+  const propertyTypesList = useMemo(() => {
+    const typeSet = new Set();
+    rawListings.forEach((item) => {
+      if (item.property_type) typeSet.add(item.property_type.toLowerCase().trim());
+    });
+    return Array.from(typeSet).sort();
+  }, [rawListings]);
+
   const auditData = useMemo(() => {
     const scamList = [];
     const corruptList = [];
-    const magList = [];
 
     rawListings.forEach((l) => {
       const desc = String(l.description || "").toLowerCase();
@@ -69,23 +77,20 @@ export default function Insights() {
         scamList.push({ ...l, flagReason: "Demands upfront payment before viewing" });
       }
 
-      const isNegative = Number(l.price) < 0;
+      const priceVal = Number(l.price);
+      const isZeroOrNegative = isNaN(priceVal) || priceVal <= 0;
       const isBadArea = Number(l.carpet_area) > 0 && Number(l.super_built_up_area) > 0 && Number(l.carpet_area) > Number(l.super_built_up_area);
       const isBadFloor = Number(l.total_floors) > 0 && Number(l.floor) > Number(l.total_floors);
 
-      if (isNegative || isBadArea || isBadFloor) {
+      if (isZeroOrNegative || isBadArea || isBadFloor) {
         corruptList.push({
           ...l,
-          flagReason: isNegative ? "Negative pricing" : isBadArea ? "Carpet area exceeds Super Built-up" : "Floor higher than total floors"
+          flagReason: isZeroOrNegative ? "Zero or negative pricing (NA)" : isBadArea ? "Carpet area exceeds Super Built-up" : "Floor higher than total floors"
         });
-      }
-
-      if (l.listing_id && String(l.listing_id).startsWith("MAG-")) {
-        magList.push({ ...l, flagReason: "Area originally in Sq. Meters instead of Sq. Feet" });
       }
     });
 
-    return { scamList, corruptList, magList };
+    return { scamList, corruptList };
   }, [rawListings]);
 
   const filteredMetrics = useMemo(() => {
@@ -94,29 +99,46 @@ export default function Insights() {
     if (selectedLocality !== "all") {
       dataset = dataset.filter((l) => String(l.locality || "").toLowerCase().trim() === selectedLocality);
     }
+    if (selectedPropertyType !== "all") {
+      dataset = dataset.filter((l) => String(l.property_type || "").toLowerCase().trim() === selectedPropertyType);
+    }
     if (activeOnly) {
       dataset = dataset.filter((l) => l.is_live === true || l.is_live === "true" || l.is_live === 1);
     }
 
+    const excludedIds = new Set([
+      ...auditData.scamList.map((l) => l.listing_id || l.id),
+      ...auditData.corruptList.map((l) => l.listing_id || l.id)
+    ]);
+
+    if (excludeCorrupt) {
+      dataset = dataset.filter((l) => !excludedIds.has(l.listing_id || l.id));
+    }
+
     const activeListings = dataset.filter((l) => l.is_live === true || l.is_live === "true" || l.is_live === 1);
     
-    // Compute median price locally from active records
     const pricedPrices = activeListings.filter((l) => Number(l.price) > 0).map((l) => Number(l.price)).sort((a, b) => a - b);
     const medianPrice = pricedPrices.length > 0 ? pricedPrices[Math.floor(pricedPrices.length / 2)] : 0;
 
-    const excludedIds = new Set([
-      ...auditData.scamList.map((l) => l.listing_id),
-      ...auditData.corruptList.map((l) => l.listing_id)
-    ]);
+    const calculateBhkSqft = (bhkNum, isPlus = false) => {
+      const validItems = activeListings.filter((l) => {
+        const b = Number(l.bedroom);
+        const matchesBhk = isPlus ? b >= bhkNum : b === bhkNum;
+        return matchesBhk && Number(l.carpet_area) > 0 && Number(l.price) > 0;
+      });
 
-    const valid2BHK = activeListings.filter((l) => 
-      Number(l.bedroom) === 2 && 
-      !excludedIds.has(l.listing_id) && 
-      Number(l.carpet_area) > 0 && 
-      Number(l.price) > 0
-    );
+      if (validItems.length === 0) return 0;
+      const total = validItems.reduce((sum, l) => sum + (Number(l.price) / Number(l.carpet_area)), 0);
+      return Math.round(total / validItems.length);
+    };
 
-    const avg2BHKPriceSqft = valid2BHK.length === 0 ? 0 : valid2BHK.reduce((sum, l) => sum + (Number(l.price) / Number(l.carpet_area)), 0) / valid2BHK.length;
+    const sqftByBhk = {
+      "1 BHK": calculateBhkSqft(1),
+      "2 BHK": calculateBhkSqft(2),
+      "3 BHK": calculateBhkSqft(3),
+      "4+ BHK": calculateBhkSqft(4, true)
+    };
+
     const verifiedCount = dataset.filter((l) => l.is_verified === true || l.is_verified === "true" || l.is_verified === 1).length;
     const ownerCount = dataset.filter((l) => String(l.posted_by || "").toLowerCase() === "owner").length;
 
@@ -142,14 +164,14 @@ export default function Insights() {
       totalCount: dataset.length,
       activeCount: activeListings.length,
       medianPrice,
-      avg2BHKPriceSqft: Math.round(avg2BHKPriceSqft),
+      sqftByBhk,
       verifiedCount,
       ownerCount,
       avgArea: Math.round(avgArea),
       bhkDistribution,
       propertyTypes
     };
-  }, [rawListings, selectedLocality, activeOnly, auditData]);
+  }, [rawListings, selectedLocality, selectedPropertyType, activeOnly, excludeCorrupt, auditData]);
 
   const exportToCSV = () => {
     if (!filteredMetrics) return;
@@ -158,10 +180,12 @@ export default function Insights() {
       ["Total Evaluated Records", filteredMetrics.totalCount],
       ["Active Listings", filteredMetrics.activeCount],
       ["Scam Listings Blocked", auditData.scamList.length],
-      ["Corrupt Records Flagged", auditData.corruptList.length],
+      ["Corrupt / Zero / Negative Records Flagged", auditData.corruptList.length],
       ["Median Price", filteredMetrics.medianPrice],
-      ["Avg 2BHK Price/Sqft", filteredMetrics.avg2BHKPriceSqft],
-      ["Area Unit Errors (MAG-)", auditData.magList.length]
+      ["Avg 1BHK Price/Sqft", filteredMetrics.sqftByBhk["1 BHK"]],
+      ["Avg 2BHK Price/Sqft", filteredMetrics.sqftByBhk["2 BHK"]],
+      ["Avg 3BHK Price/Sqft", filteredMetrics.sqftByBhk["3 BHK"]],
+      ["Avg 4+ BHK Price/Sqft", filteredMetrics.sqftByBhk["4+ BHK"]]
     ];
     const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -191,16 +215,30 @@ export default function Insights() {
             <div className="flex flex-wrap items-center gap-3 bg-white p-2.5 rounded-2xl border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 px-2 text-sm font-semibold text-[#1E2022]">
                 <Filter size={16} className="text-[#D97051]" />
-                Locality:
+                Filters:
               </div>
+
+              {/* Locality Filter */}
               <select
                 value={selectedLocality}
                 onChange={(e) => setSelectedLocality(e.target.value)}
                 className="bg-gray-50 border border-gray-200 text-[#1E2022] text-sm rounded-xl px-3 py-1.5 outline-none font-medium capitalize"
               >
-                <option value="all">All Localities ({rawListings.length} loaded)</option>
+                <option value="all">All Localities</option>
                 {localities.map((loc) => (
                   <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+
+              {/* Property Type Filter */}
+              <select
+                value={selectedPropertyType}
+                onChange={(e) => setSelectedPropertyType(e.target.value)}
+                className="bg-gray-50 border border-gray-200 text-[#1E2022] text-sm rounded-xl px-3 py-1.5 outline-none font-medium capitalize"
+              >
+                <option value="all">All Property Types</option>
+                {propertyTypesList.map((pt) => (
+                  <option key={pt} value={pt}>{pt}</option>
                 ))}
               </select>
 
@@ -212,6 +250,16 @@ export default function Insights() {
                   className="h-4 w-4 accent-[#D97051] rounded"
                 />
                 Active Only
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer border-l border-gray-200 pl-3 text-sm font-semibold text-[#1E2022]" title="Excludes listings with zero, negative, or invalid pricing parameters">
+                <input
+                  type="checkbox"
+                  checked={excludeCorrupt}
+                  onChange={(e) => setExcludeCorrupt(e.target.checked)}
+                  className="h-4 w-4 accent-orange-500 rounded"
+                />
+                Exclude Corrupt / Zero Prices
               </label>
             </div>
             
@@ -236,7 +284,10 @@ export default function Insights() {
             <section>
               <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
                 <TrendingUp size={16} className="text-[#D97051]" />
-                Primary KPI Indicators {selectedLocality !== "all" && `— Filtering: ${selectedLocality}`}
+                Primary KPI Indicators 
+                {selectedLocality !== "all" && ` — Locality: ${selectedLocality}`} 
+                {selectedPropertyType !== "all" && ` — Type: ${selectedPropertyType}`}
+                {excludeCorrupt && ` (Excluding Corrupt/Zero Prices)`}
               </h2>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
@@ -265,14 +316,6 @@ export default function Insights() {
 
                 <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase">Avg 2BHK Price/Sqft</span>
-                    <div className="p-2 bg-purple-50 rounded-xl"><Ruler size={18} className="text-purple-500" /></div>
-                  </div>
-                  <p className="text-3xl font-extrabold text-purple-700">₹{filteredMetrics.avg2BHKPriceSqft.toLocaleString()}</p>
-                </div>
-
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
-                  <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-bold text-gray-400 uppercase">Verified Portfolios</span>
                     <div className="p-2 bg-teal-50 rounded-xl"><BadgeCheck size={18} className="text-teal-600" /></div>
                   </div>
@@ -295,13 +338,36 @@ export default function Insights() {
                   <p className="text-3xl font-extrabold text-[#1E2022]">{filteredMetrics.avgArea.toLocaleString()} <span className="text-base font-bold text-gray-400">sq.ft</span></p>
                 </div>
 
-                <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
+                <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between sm:col-span-2">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-bold text-gray-400 uppercase">Selected Area</span>
+                    <span className="text-xs font-bold text-gray-400 uppercase">Active Filters</span>
                     <div className="p-2 bg-rose-50 rounded-xl"><MapPin size={18} className="text-rose-600" /></div>
                   </div>
-                  <p className="text-2xl font-extrabold text-[#1E2022] capitalize truncate">{selectedLocality === "all" ? "All Localities" : selectedLocality}</p>
+                  <p className="text-sm font-bold text-[#1E2022] capitalize">
+                    Locality: <span className="text-[#D97051]">{selectedLocality}</span> | Type: <span className="text-[#D97051]">{selectedPropertyType}</span>
+                  </p>
                 </div>
+              </div>
+            </section>
+
+            {/* Average Price per Sqft by BHK Configuration */}
+            <section>
+              <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-2">
+                <Ruler size={16} className="text-[#D97051]" />
+                Average Price per Sq.Ft by BHK Configuration
+              </h2>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {Object.entries(filteredMetrics.sqftByBhk).map(([bhkLabel, priceVal]) => (
+                  <div key={bhkLabel} className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-bold text-gray-400 uppercase">{bhkLabel} Rate</span>
+                      <div className="p-2 bg-purple-50 rounded-xl"><Ruler size={18} className="text-purple-500" /></div>
+                    </div>
+                    <p className="text-3xl font-extrabold text-purple-700">
+                      {priceVal > 0 ? `₹${priceVal.toLocaleString()}` : "N/A"} <span className="text-xs font-normal text-gray-400">/sq.ft</span>
+                    </p>
+                  </div>
+                ))}
               </div>
             </section>
 
@@ -364,26 +430,35 @@ export default function Insights() {
                   Security & Integrity Radar (Click card to audit)
                 </h2>
               </div>
-              <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-3">
-                <div onClick={() => setInspectModal({ title: "Flagged Fraudulent / Advance-Payment Listings", items: auditData.scamList })} className="rounded-2xl bg-white p-6 shadow-sm border border-gray-200 border-l-4 border-l-red-500 cursor-pointer transition hover:-translate-y-1 hover:shadow-md">
+              <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
+                <div 
+                  onClick={() => setInspectModal({ title: "Flagged Fraudulent / Advance-Payment Listings", items: auditData.scamList })} 
+                  className={`rounded-2xl p-6 shadow-sm border border-gray-200 border-l-4 border-l-red-500 cursor-pointer transition hover:-translate-y-1 hover:shadow-md ${auditData.scamList.length > 0 ? 'bg-red-50/70 border-red-300' : 'bg-white'}`}
+                >
                   <div className="flex justify-between items-start mb-2"><span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Advance Fee Scams</span><ShieldAlert size={20} className="text-red-500" /></div>
                   <p className="text-4xl font-black text-red-600 mb-1">{auditData.scamList.length}</p>
-                  <p className="text-xs text-gray-500 mb-3">Solicit upfront non-refundable fees prior to inspection.</p>
+                  <p className="text-xs text-gray-600 mb-3 font-medium">Solicit upfront non-refundable fees prior to inspection.</p>
+                  {auditData.scamList.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                      <span className="inline-block px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded-md">Anomaly: Upfront Token Demand</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1 text-xs font-bold text-red-600"><Eye size={14} /> Inspect listings</div>
                 </div>
 
-                <div onClick={() => setInspectModal({ title: "Flagged Corrupt / Impossible Database Records", items: auditData.corruptList })} className="rounded-2xl bg-white p-6 shadow-sm border border-gray-200 border-l-4 border-l-orange-500 cursor-pointer transition hover:-translate-y-1 hover:shadow-md">
-                  <div className="flex justify-between items-start mb-2"><span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Corrupt Records</span><AlertTriangle size={20} className="text-orange-500" /></div>
-                  <p className="text-4xl font-black text-orange-500 mb-1">{auditData.corruptList.length}</p>
-                  <p className="text-xs text-gray-500 mb-3">Negative prices, impossible floors, or inverted areas.</p>
-                  <div className="flex items-center gap-1 text-xs font-bold text-orange-500"><Eye size={14} /> Inspect listings</div>
-                </div>
-
-                <div onClick={() => setInspectModal({ title: "MagicHomes Area Unit Inconsistencies", items: auditData.magList })} className="rounded-2xl bg-white p-6 shadow-sm border border-gray-200 border-l-4 border-l-blue-500 cursor-pointer transition hover:-translate-y-1 hover:shadow-md">
-                  <div className="flex justify-between items-start mb-2"><span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Unit Contradictions</span><AlertCircle size={20} className="text-blue-500" /></div>
-                  <p className="text-4xl font-black text-blue-600 mb-1">{auditData.magList.length}</p>
-                  <p className="text-xs text-gray-500 mb-3">Records measured in Square Meters instead of Square Feet.</p>
-                  <div className="flex items-center gap-1 text-xs font-bold text-blue-600"><Eye size={14} /> Inspect listings</div>
+                <div 
+                  onClick={() => setInspectModal({ title: "Flagged Corrupt / Zero / Negative Price Records", items: auditData.corruptList })} 
+                  className={`rounded-2xl p-6 shadow-sm border border-gray-200 border-l-4 border-l-orange-500 cursor-pointer transition hover:-translate-y-1 hover:shadow-md ${auditData.corruptList.length > 0 ? 'bg-orange-50/70 border-orange-300' : 'bg-white'}`}
+                >
+                  <div className="flex justify-between items-start mb-2"><span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Corrupt / Zero Prices</span><AlertTriangle size={20} className="text-orange-500" /></div>
+                  <p className="text-4xl font-black text-orange-600 mb-1">{auditData.corruptList.length}</p>
+                  <p className="text-xs text-gray-600 mb-3 font-medium">Zero/negative prices, impossible floors, or inverted areas.</p>
+                  {auditData.corruptList.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                      <span className="inline-block px-2 py-0.5 bg-orange-100 text-orange-800 text-[10px] font-bold rounded-md">Anomaly: Invalid Pricing / Floor Logic</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 text-xs font-bold text-orange-600"><Eye size={14} /> Inspect listings</div>
                 </div>
               </div>
             </section>
@@ -408,7 +483,7 @@ export default function Insights() {
                 {inspectModal.items.map((item, idx) => (
                   <div key={item.listing_id || idx} className="py-3 flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold bg-[#FDF1EA] text-[#D97051] px-2 py-0.5 rounded-md">{item.listing_id}</span>
+                      <span className="font-mono text-xs font-bold bg-[#FDF1EA] text-[#D97051] px-2 py-0.5 rounded-md">{item.listing_id || item.id}</span>
                       <span className="text-xs font-bold text-red-500">{item.flagReason}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">

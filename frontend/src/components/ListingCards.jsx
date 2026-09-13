@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { BedDouble, Bath, Ruler, MapPin, BadgeCheck, Heart } from "lucide-react";
+import { BedDouble, Bath, Ruler, MapPin, BadgeCheck, Heart, AlertTriangle } from "lucide-react";
 import { getFavourites, addFavourite, removeFavourite } from "../api/ivyApi";
 import { useToast } from "../context/ToastContext";
 import { formatPrice } from "../utils/helpers";
@@ -15,14 +14,34 @@ function getImage(listing) {
   );
 }
 
-// Single Card Component (Exported for custom layouts like Favourites)
-export function ListingCard({ listing, isFav, onToggleFav }) {
+// Helper to check for true data anomalies and scams (Excluded MAG- since it's auto-converted)
+function checkAnomalies(listing) {
+  const anomalies = [];
+  const desc = String(listing.description || "").toLowerCase();
+  const price = Number(listing.price);
+
+  if (desc.includes("token amount") || desc.includes("booking amount") || desc.includes("site visit only after")) {
+    anomalies.push("Advance Fee Scam Risk");
+  }
+  if (isNaN(price) || price <= 0) {
+    anomalies.push("Zero / Negative Pricing");
+  }
+  if (Number(listing.carpet_area) > 0 && Number(listing.super_built_up_area) > 0 && Number(listing.carpet_area) > Number(listing.super_built_up_area)) {
+    anomalies.push("Carpet Area Exceeds Super Built-up");
+  }
+  if (Number(listing.total_floors) > 0 && Number(listing.floor) > Number(listing.total_floors)) {
+    anomalies.push("Floor Exceeds Total Floors");
+  }
+
+  return anomalies;
+}
+
+// Single Card Component
+export function ListingCard({ listing, isFav, onToggleFav, onCardClick }) {
   const id = listing.listing_id || listing.project_id || listing.id;
   
-  // Smart URL & Type Detection (Uses __type tag if injected by page)
   const isRental = listing.__type === 'rental' || String(id).startsWith("R");
   const isProject = listing.__type === 'project' || String(id).startsWith("P") || listing.project_status;
-  const linkPath = isProject ? `/projects/${id}` : isRental ? `/rentals/${id}` : `/listings/${id}`;
   
   // Smart Price Formatting
   let priceDisplay;
@@ -35,8 +54,19 @@ export function ListingCard({ listing, isFav, onToggleFav }) {
   if (isRental) tag = `Rental ${tag}`;
   if (isProject) tag = listing.project_status || "Project";
 
+  // Check anomalies
+  const anomalies = checkAnomalies(listing);
+  const hasAnomalies = anomalies.length > 0;
+
   return (
-    <Link to={linkPath} className="group overflow-hidden rounded-2xl border border-[#1E2022]/10 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg block h-full flex flex-col">
+    <div 
+      onClick={() => onCardClick && onCardClick(listing)}
+      className={`group overflow-hidden rounded-2xl border transition duration-200 hover:-translate-y-1 hover:shadow-lg block h-full flex flex-col cursor-pointer ${
+        hasAnomalies 
+          ? 'bg-red-50/70 border-red-300 shadow-sm' 
+          : 'bg-white border-[#1E2022]/10'
+      }`}
+    >
       <div className="relative h-56 overflow-hidden bg-[#FDF1EA] shrink-0">
         <img
           src={getImage(listing)}
@@ -54,7 +84,7 @@ export function ListingCard({ listing, isFav, onToggleFav }) {
             </div>
           )}
           <button 
-            onClick={(e) => { e.preventDefault(); onToggleFav(id, e); }}
+            onClick={(e) => { e.stopPropagation(); onToggleFav(id, e); }}
             className="flex items-center justify-center rounded-lg bg-white p-2 shadow-sm transition hover:scale-110"
           >
             <Heart size={18} className={isFav ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-red-400"} />
@@ -71,9 +101,20 @@ export function ListingCard({ listing, isFav, onToggleFav }) {
             <MapPin size={14} />
             <span className="line-clamp-1">{listing.locality || listing.address || "Location unavailable"}</span>
           </div>
-          <div className="mb-4 mt-3 text-xl font-bold text-[#D97051]">
+          
+          <div className={`mb-3 mt-3 text-xl font-bold ${hasAnomalies ? 'text-[#990000]' : 'text-[#D97051]'}`}>
             {priceDisplay}
           </div>
+
+          {hasAnomalies && (
+            <div className="mb-3 flex flex-wrap gap-1">
+              {anomalies.map((anomaly, idx) => (
+                <span key={idx} className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-red-200">
+                  <AlertTriangle size={11} /> {anomaly}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-4 border-t border-[#1E2022]/10 pt-4 text-sm text-[#1E2022]/70">
@@ -99,12 +140,12 @@ export function ListingCard({ listing, isFav, onToggleFav }) {
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
-// Default Grid Component
-export default function ListingCards({ listings = [], onRemoveFav }) {
+// Default Grid Component with onCardClick Support
+export default function ListingCards({ listings = [], onRemoveFav, onCardClick }) {
   const [favIds, setFavIds] = useState(new Set());
   const { showToast } = useToast();
 
@@ -146,6 +187,7 @@ export default function ListingCards({ listings = [], onRemoveFav }) {
             listing={listing} 
             isFav={favIds.has(id)} 
             onToggleFav={handleToggleFavourite} 
+            onCardClick={onCardClick}
           />
         );
       })}
