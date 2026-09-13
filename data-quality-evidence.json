@@ -1,0 +1,520 @@
+{
+  "corrupt": {
+    "total": 21,
+    "ids": [
+      "100-3003022",
+      "MAG-3000932",
+      "100-3001548",
+      "ZER-3000380",
+      "100-3000174",
+      "DWE-3001307",
+      "100-3001067",
+      "SQU-3000591",
+      "SQU-3000419",
+      "100-3002344",
+      "MAG-3001986",
+      "DWE-3003186",
+      "DWE-3001849",
+      "100-3000236",
+      "100-3000608",
+      "SQU-3001698",
+      "MAG-3001979",
+      "DWE-3000235",
+      "MAG-3001263",
+      "DWE-3000299",
+      "100-3001543"
+    ],
+    "evidence": [
+      {
+        "listing_id": "100-3003022",
+        "reasons": [
+          "negative_price"
+        ],
+        "price": -7730000,
+        "floor": 18,
+        "total_floors": 28,
+        "carpet_area_raw": 886,
+        "super_built_up_area_raw": 1159,
+        "carpet_area_sqft": 886,
+        "super_built_up_area_sqft": 1159
+      },
+      {
+        "listing_id": "MAG-3000932",
+        "reasons": [
+          "floor_greater_than_total_floors"
+        ],
+        "price": 9300000,
+        "floor": 11,
+        "total_floors": 7,
+        "carpet_area_raw": 840,
+        "super_built_up_area_raw": 1142,
+        "carpet_area_sqft": 9041.76,
+        "super_built_up_area_sqft": 12292.49
+      },
+      {
+        "listing_id": "100-3001548",
+        "reasons": [
+          "floor_greater_than_total_floors"
+        ],
+        "price": 3700000,
+        "floor": 41,
+        "total_floors": 31,
+        "carpet_area_raw": 318,
+        "super_built_up_area_raw": 442,
+        "carpet_area_sqft": 318,
+        "super_built_up_area_sqft": 442
+      },
+      {
+        "listing_id": "ZER-3000380",
+        "reasons": [
+          "carpet_area_greater_than_super_built_up_area"
+        ],
+        "price": 5520000,
+        "floor": 1,
+        "total_floors": 12,
+        "carpet_area_raw": 1060,
+        "super_built_up_area_raw": 699,
+        "carpet_area_sqft": 1060,
+        "super_built_up_area_sqft": 699
+      },
+      {
+        "listing_id": "100-3000174",
+        "reasons": [
+          "negative_price"
+        ],
+        "price": -8590000,
+        "floor": 2,
+        "total_floors": 14,
+        "carpet_area_raw": 831,
+        "super_built_up_area_raw": 1104,
+        "carpet_area_sqft": 831,
+        "super_built_up_area_sqft": 1104
+      },
+      {
+        "listing_id": "DWE-3001307",
+        "reasons": [
+          "floor_greater_than_total_floors"
+        ],
+        "price": 9340000,
+        "floor": 43,
+        "total_floors": 29,
+        "carpet_area_raw": 791,
+        "super_built_up_area_raw": 1136,
+        "carpet_area_sqft": 791,
+        "super_built_up_area_sqft": 1136
+      },
+      {
+        "listing_id": "100-3001067",
+        "reasons": [
+          "floor_greater_than_total_floors"
+        ],
+        "price": 10160000,
+        "floor": 8,
+        "total_floors": 4,
+        "carpet_area_raw": 1198,
+        "super_built_up_area_raw": 1693,
+        "carpet_area_sqft": 1198,
+        "super_built_up_area_sqft": 1693
+      },
+      {
+        "listing_id": "SQU-3000591",
+        "reasons": [
+          "negative_price"
+        ],
+        "price": -15890000,
+        "floor": 12,
+        "total_floors": 24,
+        "carpet_area_raw": 1596,
+        "super_built_up_area_raw": 2234,
+        "carpet_area_sqft": 1596,
+        "super_built_up_area_sqft": 2234
+      },
+      {
+        "listing_id": "SQU-3000419",
+        "reasons": [
+          "negative_price"
+        ],
+        "price": -7140000,
+        "floor": 5,
+        "total_floors": 7,
+        "carpet_area_raw": 899,
+        "super_built_up_area_raw": 1222,
+        "carpet_area_sqft": 899,
+        "super_built_up_area_sqft": 1222
+      },
+      {
+        "listing_id": "100-3002344",
+        "reasons": [
+          "negative_price"
+        ],
+        "price": -9730000,
+        "floor": 9,
+        "total_floors": 10,
+        "carpet_area_raw": 1126,
+        "super_built_up_area_raw": 1607,
+        "carpet_area_sqft": 1126,
+        "super_built_up_area_sqft": 1607
+      },
+      {
+        "listing_id": "MAG-3001986",
+        "reasons": [
+          "negative_price"
+        ],
+        "price": -10770000,
+        "floor": 2,
+        "total_floors": 21,
+        "carpet_area_raw": 144,
+        "super_built_up_area_raw": 187,
+        "carpet_area_sqft": 1550.02,
+        "super_built_up_area_sqft": 2012.87
+      },
+      {
+        "listing_id": "DWE-3003186",
+        "reasons": [
+          "floor_greater_than_total_floors"
+        ],
+        "price": 10130000,
+        "floor": 41,
+        "total_floors": 32,
+        "carpet_area_raw": 840,
+        "super_built_up_area_raw": 1152,
+        "carpet_area_sqft": 840,
+        "super_built_up_area_sqft": 1152
+      },
+      {
+        "listing_id": "DWE-3001849",
+        "reasons": [
+          "carpet_area_greater_than_super_built_up_area"
+        ],
+        "price": 7240000,
+        "floor": 2,
+        "total_floors": 20,
+        "carpet_area_raw": 1497,
+        "super_built_up_area_raw": 889,
+        "carpet_area_sqft": 1497,
+        "super_built_up_area_sqft": 889
+      },
+      {
+        "listing_id": "100-3000236",
+        "reasons": [
+          "carpet_area_greater_than_super_built_up_area"
+        ],
+        "price": 8490000,
+        "floor": 8,
+        "total_floors": 18,
+        "carpet_area_raw": 1812,
+        "super_built_up_area_raw": 1262,
+        "carpet_area_sqft": 1812,
+        "super_built_up_area_sqft": 1262
+      },
+      {
+        "listing_id": "100-3000608",
+        "reasons": [
+          "carpet_area_greater_than_super_built_up_area"
+        ],
+        "price": 8750000,
+        "floor": 5,
+        "total_floors": 6,
+        "carpet_area_raw": 1729,
+        "super_built_up_area_raw": 1206,
+        "carpet_area_sqft": 1729,
+        "super_built_up_area_sqft": 1206
+      },
+      {
+        "listing_id": "SQU-3001698",
+        "reasons": [
+          "floor_greater_than_total_floors"
+        ],
+        "price": 8170000,
+        "floor": 34,
+        "total_floors": 20,
+        "carpet_area_raw": 764,
+        "super_built_up_area_raw": 1077,
+        "carpet_area_sqft": 764,
+        "super_built_up_area_sqft": 1077
+      },
+      {
+        "listing_id": "MAG-3001979",
+        "reasons": [
+          "negative_price"
+        ],
+        "price": -11500000,
+        "floor": 12,
+        "total_floors": 16,
+        "carpet_area_raw": 885,
+        "super_built_up_area_raw": 1252,
+        "carpet_area_sqft": 9526.14,
+        "super_built_up_area_sqft": 13476.53
+      },
+      {
+        "listing_id": "DWE-3000235",
+        "reasons": [
+          "carpet_area_greater_than_super_built_up_area"
+        ],
+        "price": 8740000,
+        "floor": 4,
+        "total_floors": 27,
+        "carpet_area_raw": 1788,
+        "super_built_up_area_raw": 1066,
+        "carpet_area_sqft": 1788,
+        "super_built_up_area_sqft": 1066
+      },
+      {
+        "listing_id": "MAG-3001263",
+        "reasons": [
+          "carpet_area_greater_than_super_built_up_area"
+        ],
+        "price": 9860000,
+        "floor": 0,
+        "total_floors": 6,
+        "carpet_area_raw": 153,
+        "super_built_up_area_raw": 102,
+        "carpet_area_sqft": 1646.89,
+        "super_built_up_area_sqft": 1097.93
+      },
+      {
+        "listing_id": "DWE-3000299",
+        "reasons": [
+          "carpet_area_greater_than_super_built_up_area"
+        ],
+        "price": 15920000,
+        "floor": 9,
+        "total_floors": 12,
+        "carpet_area_raw": 2398,
+        "super_built_up_area_raw": 1600,
+        "carpet_area_sqft": 2398,
+        "super_built_up_area_sqft": 1600
+      }
+    ]
+  },
+  "fake": {
+    "total": 74,
+    "ids": [
+      "ZER-3001479",
+      "100-3000496",
+      "ZER-3002809",
+      "DWE-3002258",
+      "100-3001997",
+      "MAG-3000975",
+      "100-3002778",
+      "ZER-3000134",
+      "MAG-3000899",
+      "ZER-3001323",
+      "SQU-3001912",
+      "SQU-3001267",
+      "ZER-3003419",
+      "SQU-3001036",
+      "DWE-3001223",
+      "100-3001429",
+      "100-3000879",
+      "ZER-3003145",
+      "100-3000368",
+      "DWE-3000078",
+      "ZER-3001051",
+      "DWE-3002667",
+      "ZER-3001108",
+      "SQU-3002415",
+      "100-3000993",
+      "DWE-3002401",
+      "ZER-3003489",
+      "ZER-3003303",
+      "DWE-3003454",
+      "SQU-3001363",
+      "SQU-3003274",
+      "SQU-3001670",
+      "MAG-3000989",
+      "MAG-3000295",
+      "100-3001595",
+      "ZER-3002484",
+      "MAG-3001722",
+      "DWE-3000925",
+      "DWE-3002944",
+      "ZER-3002757",
+      "DWE-3002506",
+      "ZER-3001241",
+      "DWE-3003650",
+      "100-3000190",
+      "MAG-3002945",
+      "MAG-3001449",
+      "ZER-3000661",
+      "DWE-3000316",
+      "SQU-3001895",
+      "ZER-3002254",
+      "SQU-3000106",
+      "SQU-3000070",
+      "ZER-3002321",
+      "DWE-3002226",
+      "MAG-3002139",
+      "ZER-3001394",
+      "MAG-3003161",
+      "ZER-3000588",
+      "SQU-3002848",
+      "SQU-3003364",
+      "SQU-3002754",
+      "SQU-3000654",
+      "ZER-3001935",
+      "ZER-3003094",
+      "ZER-3000663",
+      "MAG-3001079",
+      "MAG-3002351",
+      "SQU-3000022",
+      "ZER-3002805",
+      "SQU-3002029",
+      "100-3003064",
+      "MAG-3002001",
+      "MAG-3003508",
+      "MAG-3000565"
+    ],
+    "evidence": [
+      {
+        "listing_id": "ZER-3001479",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Bright and airy 4 BHK apartment in Shriram Park, Kharadi. Fully-furnished, south-east-facing. Covered parking; modular kitchen. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "100-3000496",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Owner moving abroad, priced to sell. Premium 4 BHK builder floor in Sobha Habitat, Kothrud. Semi-furnished, north-west-facing. Near schools and hospitals; walking distance to IT parks. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "ZER-3002809",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Park facing 4 BHK apartment in Prestige Boulevard, Aundh. Unfurnished, north-west-facing. Quiet lane with no through traffic; close to the metro. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "DWE-3002258",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Bright and airy 3 BHK apartment in My Home Pavilion, Hinjewadi. Unfurnished, east-facing. Wooden flooring in the bedrooms; modular kitchen. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "100-3001997",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Well maintained 4 BHK villa in Lodha Heights, Hadapsar. Semi-furnished, north-west-facing. Walking distance to it parks; quiet lane with no through traffic. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "MAG-3000975",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Urgent sale - owner relocating. Well maintained 2 BHK independent house in Kolte Patil Pavilion, Kharadi. Semi-furnished, south-facing. Quiet lane with no through traffic; near schools and hospitals. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "100-3002778",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Price negotiable for a quick sale. Sunlit 3 BHK villa in Shriram Boulevard, Hinjewadi. Semi-furnished, north-facing. Walking distance to it parks; wooden flooring in the bedrooms. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "ZER-3000134",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Bright and airy 2 BHK apartment in Shriram Boulevard, Baner. Semi-furnished, north-facing. Wooden flooring in the bedrooms; covered parking. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "MAG-3000899",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Urgent sale - owner relocating. Spacious 3 BHK apartment in Aparna Boulevard, Balewadi. Semi-furnished, north-facing. Walking distance to it parks; near schools and hospitals. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "ZER-3001323",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Quiet 3 BHK apartment in Kolte Patil Greens, Hadapsar. Fully-furnished, north-facing. Covered parking; near schools and hospitals. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "SQU-3001912",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Urgent sale - owner relocating. Vastu compliant 2 BHK villa in Puravankara Elite, Balewadi. Unfurnished, east-facing. 24x7 water and power backup; covered parking. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "SQU-3001267",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Urgent sale - owner relocating. Bright and airy 1 BHK apartment in Rohan Park, Kharadi. Semi-furnished, south-facing. Close to the metro; gated society with security. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "ZER-3003419",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Vastu compliant 2 BHK apartment in puravankara grand, Magarpatta. Unfurnished, south-west-facing. Wooden flooring in the bedrooms; clubhouse and pool in the society. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "SQU-3001036",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Spacious 5 BHK apartment in Rohan Crest, Balewadi. Fully-furnished, south-west-facing. Walking distance to it parks; covered parking. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "DWE-3001223",
+        "matched_phrases": [
+          "booking amount",
+          "site visit only after"
+        ],
+        "description": "Premium 2 BHK apartment in Lodha Elite, Wakad. Unfurnished, west-facing. Clubhouse and pool in the society; modular kitchen. Site visit only after the booking amount is paid."
+      },
+      {
+        "listing_id": "100-3001429",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Urgent sale - owner relocating. Premium 2 BHK apartment in Puravankara Meadows, Aundh. Semi-furnished, west-facing. Clubhouse and pool in the society; covered parking. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "100-3000879",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Quiet 5 BHK independent house in Salarpuria Serenity, Wakad. Fully-furnished, south-west-facing. Wooden flooring in the bedrooms; modular kitchen. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "ZER-3003145",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Price negotiable for a quick sale. Spacious 4 BHK apartment in Shriram Terraces, Kothrud. Fully-furnished, east-facing. Covered parking; close to the metro. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "100-3000368",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Price negotiable for a quick sale. Well maintained 2 BHK apartment in My Home Pavilion, Magarpatta. Semi-furnished, north-east-facing. Quiet lane with no through traffic; gated society with security. Pay a token amount of Rs 25,000 today to block the unit."
+      },
+      {
+        "listing_id": "DWE-3000078",
+        "matched_phrases": [
+          "token amount"
+        ],
+        "description": "Park facing 2 BHK apartment in Rohan Boulevard, Hinjewadi. Fully-furnished, east-facing. Covered parking; clubhouse and pool in the society. Pay a token amount of Rs 25,000 today to block the unit."
+      }
+    ]
+  }
+}

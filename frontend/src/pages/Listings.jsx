@@ -1,18 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import ListingCards from "../components/ListingCards";
-import Pagination from "../components/Pagination";
-import { getListings, extractItems } from "../api/ivyApi";
-
-const ITEMS_PER_PAGE = 50;
+import { getAllListings } from "../api/ivyApi";
 
 export default function Listings() {
-  const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Instant initialization from global cache if available
+  const [allListings, setAllListings] = useState(() => window.__IVY_DB_CACHE__ || []);
+  const [loading, setLoading] = useState(!window.__IVY_DB_CACHE__);
   const [error, setError] = useState("");
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
 
-  // Filter States
   const [search, setSearch] = useState("");
   const [propertyType, setPropertyType] = useState("");
   const [bedroom, setBedroom] = useState("");
@@ -21,36 +16,54 @@ export default function Listings() {
   const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
-    async function loadListings() {
-      setLoading(true);
+    async function loadData() {
+      if (!window.__IVY_DB_CACHE__) setLoading(true);
       setError("");
       try {
-        const params = {
-          page,
-          limit: ITEMS_PER_PAGE,
-        };
-        if (search) params.locality = search.toLowerCase().trim();
-        if (propertyType) params.property_type = propertyType;
-        if (bedroom) params.bhk = bedroom;
-        if (furnishing) params.furnishing = furnishing;
-        if (maxPrice) params.max_price = maxPrice;
-
-        if (sortBy === "price-asc") { params.sort_by = "price"; params.order = "asc"; }
-        else if (sortBy === "price-desc") { params.sort_by = "price"; params.order = "desc"; }
-        else if (sortBy === "area-desc") { params.sort_by = "carpet_area"; params.order = "desc"; }
-
-        const response = await getListings(params);
-        const items = extractItems(response).map(item => ({ ...item, __type: 'listing' }));
-        setListings(items);
-        setTotal(response?.total || 0);
+        const data = await getAllListings();
+        setAllListings(data || []);
       } catch (err) {
-        setError(err.message || "Failed to load listings from server.");
+        setError(err.message || "Failed to load listings database.");
       } finally {
         setLoading(false);
       }
     }
-    loadListings();
-  }, [page, search, propertyType, bedroom, furnishing, maxPrice, sortBy]);
+    loadData();
+  }, []);
+
+  const filteredListings = useMemo(() => {
+    let result = [...allListings];
+
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      result = result.filter(item => 
+        (item.locality || "").toLowerCase().includes(q) || 
+        (item.apartment_name || "").toLowerCase().includes(q)
+      );
+    }
+    if (propertyType) {
+      result = result.filter(item => (item.property_type || "").toLowerCase() === propertyType.toLowerCase());
+    }
+    if (bedroom) {
+      result = result.filter(item => Number(item.bedroom) === Number(bedroom));
+    }
+    if (furnishing) {
+      result = result.filter(item => (item.furnishing || "").toLowerCase() === furnishing.toLowerCase());
+    }
+    if (maxPrice) {
+      result = result.filter(item => Number(item.price) <= Number(maxPrice));
+    }
+
+    if (sortBy === "price-asc") {
+      result.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (sortBy === "price-desc") {
+      result.sort((a, b) => Number(b.price) - Number(a.price));
+    } else if (sortBy === "area-desc") {
+      result.sort((a, b) => Number(b.carpet_area) - Number(a.carpet_area));
+    }
+
+    return result.map(item => ({ ...item, __type: 'listing' }));
+  }, [allListings, search, propertyType, bedroom, furnishing, maxPrice, sortBy]);
 
   const clearFilters = () => {
     setSearch("");
@@ -59,11 +72,10 @@ export default function Listings() {
     setFurnishing("");
     setMaxPrice("");
     setSortBy("default");
-    setPage(1);
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-20 font-sans">
       <main className="mx-auto max-w-7xl px-4 py-8">
         <h1 className="text-3xl font-bold mb-8 text-[#1E2022]">Find your next home</h1>
         
@@ -74,8 +86,8 @@ export default function Listings() {
               <input 
                 type="text" 
                 value={search} 
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }} 
-                placeholder="e.g. koramangala..." 
+                onChange={(e) => setSearch(e.target.value)} 
+                placeholder="e.g. viman nagar..." 
                 className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#D97051]" 
               />
             </div>
@@ -83,7 +95,7 @@ export default function Listings() {
               <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Property type</label>
               <select 
                 value={propertyType} 
-                onChange={(e) => { setPropertyType(e.target.value); setPage(1); }} 
+                onChange={(e) => setPropertyType(e.target.value)} 
                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051] capitalize"
               >
                 <option value="">All types</option>
@@ -98,7 +110,7 @@ export default function Listings() {
               <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Bedrooms</label>
               <select 
                 value={bedroom} 
-                onChange={(e) => { setBedroom(e.target.value); setPage(1); }} 
+                onChange={(e) => setBedroom(e.target.value)} 
                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051]"
               >
                 <option value="">Any</option>
@@ -112,7 +124,7 @@ export default function Listings() {
               <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Furnishing</label>
               <select 
                 value={furnishing} 
-                onChange={(e) => { setFurnishing(e.target.value); setPage(1); }} 
+                onChange={(e) => setFurnishing(e.target.value)} 
                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051]"
               >
                 <option value="">Any</option>
@@ -125,7 +137,7 @@ export default function Listings() {
               <label className="mb-2 block text-sm font-semibold text-[#1E2022]">Max Price</label>
               <select 
                 value={maxPrice} 
-                onChange={(e) => { setMaxPrice(e.target.value); setPage(1); }} 
+                onChange={(e) => setMaxPrice(e.target.value)} 
                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#D97051]"
               >
                 <option value="">Any price</option>
@@ -140,7 +152,7 @@ export default function Listings() {
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#1E2022]/10 pt-4">
             <select 
               value={sortBy} 
-              onChange={e => { setSortBy(e.target.value); setPage(1); }} 
+              onChange={e => setSortBy(e.target.value)} 
               className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-[#D97051]"
             >
               <option value="default">Sort: Relevance</option>
@@ -158,23 +170,15 @@ export default function Listings() {
         </section>
 
         {loading ? (
-          <div className="p-16 font-bold text-center animate-pulse text-gray-500 bg-gray-50 rounded-2xl">Loading 50 properties per page...</div>
+          <div className="p-16 font-bold text-center animate-pulse text-gray-500 bg-gray-50 rounded-2xl">Loading full database corpus...</div>
         ) : error ? (
           <div className="p-10 font-bold text-center text-red-500 bg-red-50 rounded-2xl border border-red-200">{error}</div>
-        ) : listings.length > 0 ? (
+        ) : filteredListings.length > 0 ? (
           <>
             <div className="mb-4 text-xs font-bold text-gray-500 uppercase tracking-wide">
-              Showing {(page - 1) * ITEMS_PER_PAGE + 1} - {Math.min(page * ITEMS_PER_PAGE, total)} of {total} listings
+              Showing all {filteredListings.length} matching records
             </div>
-            <ListingCards listings={listings} />
-            <div className="mt-8">
-              <Pagination 
-                offset={(page - 1) * ITEMS_PER_PAGE} 
-                limit={ITEMS_PER_PAGE} 
-                total={total} 
-                onChange={(newOffset) => setPage(Math.floor(newOffset / ITEMS_PER_PAGE) + 1)} 
-              />
-            </div>
+            <ListingCards listings={filteredListings} />
           </>
         ) : (
           <div className="p-10 font-bold text-center text-gray-500 bg-gray-50 rounded-2xl">No properties matched your filters.</div>

@@ -10,6 +10,7 @@ export default function Navbar() {
     { name: "Projects", path: "/projects" },
     { name: "Favourites", path: "/favourites" },
     { name: "Insights", path: "/insights" },
+    { name: "Radar Map", path: "/map" }, // <-- Added Map link here
   ];
 
   return (
@@ -42,7 +43,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center">
-            {/* Securly wipes cookies and redirects */}
+            {/* Securely wipes cookies and redirects */}
             <button
               onClick={() => logout()}
               className="rounded-xl border border-gray-200 bg-white px-5 py-2 text-sm font-bold text-[#1E2022] transition hover:border-[#D97051] hover:text-[#D97051]"

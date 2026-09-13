@@ -1,0 +1,255 @@
+{
+  "api_key": "IVY26-0328057EAE2B",
+  "candidate": {
+    "name": "Shivesh Kumar",
+    "email": "shivesh.20236129@mnnit.ac.in",
+    "repo_url": "https://github.com/shiveshkumar7007/ivyhome",
+    "demo_url": "https://ivyhome.vercel.app/"
+  },
+  "answers": {
+    "total_listing_records": 3800,
+    "unique_properties": 3515,
+    "active_listings": 2998,
+    "corrupt_listing_ids": [
+      "100-3003022",
+      "MAG-3000932",
+      "100-3001548",
+      "ZER-3000380",
+      "100-3000174",
+      "DWE-3001307",
+      "100-3001067",
+      "SQU-3000591",
+      "SQU-3000419",
+      "100-3002344",
+      "MAG-3001986",
+      "DWE-3003186",
+      "DWE-3001849",
+      "100-3000236",
+      "100-3000608",
+      "SQU-3001698",
+      "MAG-3001979",
+      "DWE-3000235",
+      "MAG-3001263",
+      "DWE-3000299",
+      "100-3001543"
+    ],
+    "total_monthly_rent": 5553900,
+    "avg_price_per_sqft_2bhk": 9269.6,
+    "costliest_project": {
+      "project_id": "P30394",
+      "price_max_inr": 9990000
+    },
+    "listings_last_7_days": 128,
+    "fake_listing_ids": [
+      "ZER-3001479",
+      "100-3000496",
+      "ZER-3002809",
+      "DWE-3002258",
+      "100-3001997",
+      "MAG-3000975",
+      "100-3002778",
+      "ZER-3000134",
+      "MAG-3000899",
+      "ZER-3001323",
+      "SQU-3001912",
+      "SQU-3001267",
+      "ZER-3003419",
+      "SQU-3001036",
+      "DWE-3001223",
+      "100-3001429",
+      "100-3000879",
+      "ZER-3003145",
+      "100-3000368",
+      "DWE-3000078",
+      "ZER-3001051",
+      "DWE-3002667",
+      "ZER-3001108",
+      "SQU-3002415",
+      "100-3000993",
+      "DWE-3002401",
+      "ZER-3003489",
+      "ZER-3003303",
+      "DWE-3003454",
+      "SQU-3001363",
+      "SQU-3003274",
+      "SQU-3001670",
+      "MAG-3000989",
+      "MAG-3000295",
+      "100-3001595",
+      "ZER-3002484",
+      "MAG-3001722",
+      "DWE-3000925",
+      "DWE-3002944",
+      "ZER-3002757",
+      "DWE-3002506",
+      "ZER-3001241",
+      "DWE-3003650",
+      "100-3000190",
+      "MAG-3002945",
+      "MAG-3001449",
+      "ZER-3000661",
+      "DWE-3000316",
+      "SQU-3001895",
+      "ZER-3002254",
+      "SQU-3000106",
+      "SQU-3000070",
+      "ZER-3002321",
+      "DWE-3002226",
+      "MAG-3002139",
+      "ZER-3001394",
+      "MAG-3003161",
+      "ZER-3000588",
+      "SQU-3002848",
+      "SQU-3003364",
+      "SQU-3002754",
+      "SQU-3000654",
+      "ZER-3001935",
+      "ZER-3003094",
+      "ZER-3000663",
+      "MAG-3001079",
+      "MAG-3002351",
+      "SQU-3000022",
+      "ZER-3002805",
+      "SQU-3002029",
+      "100-3003064",
+      "MAG-3002001",
+      "MAG-3003508",
+      "MAG-3000565"
+    ],
+    "projects_with_wrong_listing_count": 95,
+    "dataset_audit_ref": "IVY-AUDIT-7B64D376"
+  },
+  "findings": [
+    {
+      "endpoint": "/v1/listings",
+      "category": "auth",
+      "documented": "The API key must be appended as a query parameter, e.g. GET /v1/listings?api_key=...",
+      "actual": "The working requests used the API key in the X-API-Key request header. The listing sweep authenticated successfully with this header[cite: 11, 15].",
+      "how_found": "Implemented the documented login flow and fetched the complete listings dataset using X-API-Key plus Bearer authentication[cite: 11, 15]. The requests succeeded and returned 3,800 records[cite: 11].",
+      "impact": "Following the documented query-parameter authentication literally can fail even though the supported header-based request works[cite: 11, 15].",
+      "evidence": [
+        "POST /auth/login?api_key=<key> -> 401[cite: 15]",
+        "POST /auth/login with X-API-Key header -> 200[cite: 15]"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "pagination",
+      "documented": "Collection endpoints use page and limit, with page being 1-indexed[cite: 2].",
+      "actual": "The listings endpoint was successfully paged using offset and limit[cite: 11, 15]. The complete dataset was retrieved by increasing offset until has_more became false[cite: 11, 15].",
+      "how_found": "The audit downloader requested /v1/listings?limit=50&offset=N repeatedly and retrieved all 3,800 listing records without using the documented page parameter[cite: 11, 15].",
+      "impact": "A frontend or audit implementation built strictly around the documented page parameter can use the wrong pagination contract[cite: 11, 15].",
+      "evidence": []
+    },
+    {
+      "endpoint": "/v1/analytics/summary",
+      "category": "missing_endpoint",
+      "documented": "GET /v1/analytics/summary is documented as a pre-computed city analytics endpoint[cite: 2].",
+      "actual": "A direct request to /v1/analytics/summary returned HTTP 404 Not Found[cite: 11, 15].",
+      "how_found": "Requested the documented endpoint directly with valid API authentication while implementing the Insights screen[cite: 11, 15].",
+      "impact": "The documented analytics endpoint cannot be relied on for the Insights screen; analytics must instead be derived from available API data[cite: 11, 15].",
+      "evidence": [
+        "GET /v1/analytics/summary -> 404 Not Found[cite: 11, 15]"
+      ]
+    },
+    {
+      "endpoint": "/v1/listing/{id}",
+      "category": "completeness",
+      "documented": "GET /v1/listing/{listing_id} is documented as the single-listing detail endpoint.",
+      "actual": "The documented singular route returned HTTP 404; the plural route /v1/listings/{listing_id} returned HTTP 200 for the same listing[cite: 15].",
+      "how_found": "Requested the same listing ID through both the documented singular route and the working plural route[cite: 15].",
+      "impact": "Following the documented detail URL produces a broken listing-detail page[cite: 15].",
+      "evidence": [
+        "GET /v1/listing/{id} -> 404[cite: 15]",
+        "GET /v1/listings/{id} -> 200[cite: 15]"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "units",
+      "documented": "Area values are documented as square feet everywhere in the API[cite: 2].",
+      "actual": "MAG listings contain raw area values that behave as square metres; multiplying by 10.764 produces plausible square-foot values[cite: 15].",
+      "how_found": "Inspected MAG-prefixed listings and compared raw areas with the documented square-foot convention[cite: 15].",
+      "impact": "Displaying MAG area values directly as square feet materially understates the displayed property size[cite: 15].",
+      "evidence": [
+        "MAG-3001756[cite: 15]",
+        "MAG-3001519[cite: 15]",
+        "MAG-3000293[cite: 15]",
+        "MAG-3001427[cite: 15]",
+        "MAG-3002378[cite: 15]"
+      ]
+    },
+    {
+      "endpoint": "/v1/projects",
+      "category": "units",
+      "documented": "price_min and price_max are documented as rupees[cite: 2].",
+      "actual": "Many project price values are stored at a smaller scale consistent with lakh-based values[cite: 15].",
+      "how_found": "Inspected project price fields and compared raw values against the documented rupee convention and listing price scale[cite: 15].",
+      "impact": "Treating raw project prices as rupees produces severely incorrect prices in the project UI and analytics[cite: 15].",
+      "evidence": [
+        "P30001[cite: 15]",
+        "P30002[cite: 15]",
+        "P30003[cite: 15]",
+        "P30004[cite: 15]",
+        "P30005[cite: 15]"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "data_quality",
+      "documented": "Listings returned by the endpoint are described as safe to show to users, with active sale listings returned[cite: 2].",
+      "actual": "21 retrievable listing records contain objectively inconsistent data such as negative prices, carpet area greater than super-built-up area, or floor numbers greater than total floors[cite: 15].",
+      "how_found": "Audited all 3,800 locally retrievable listing records against basic numeric consistency checks[cite: 15].",
+      "impact": "Showing these records without validation can expose users to impossible prices, sizes, or floor information[cite: 15].",
+      "evidence": [
+        "100-3003022[cite: 15]",
+        "MAG-3000932[cite: 15]",
+        "100-3001548[cite: 15]",
+        "ZER-3000380[cite: 15]",
+        "100-3000174[cite: 15]"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "fraud",
+      "documented": "The endpoint is described as returning active sale listings that are safe to show to users[cite: 2].",
+      "actual": "74 retrievable listings contain descriptions requesting an upfront booking/token amount or requiring payment before a site visit[cite: 15].",
+      "how_found": "Scanned all 3,800 listing descriptions for the phrases booking amount, token amount, and site visit only after[cite: 15].",
+      "impact": "These listings require a visible warning or exclusion rather than being presented as ordinary safe-to-show listings[cite: 15].",
+      "evidence": [
+        "ZER-3001479[cite: 15]",
+        "100-3000496[cite: 15]",
+        "ZER-3002809[cite: 15]",
+        "DWE-3002258[cite: 15]",
+        "100-3001997[cite: 15]"
+      ]
+    },
+    {
+      "endpoint": "/v1/projects",
+      "category": "consistency",
+      "documented": "total_listings is documented as the number of currently available listings and is stated to always agree with GET /v1/listings?project_id=...[cite: 2]",
+      "actual": "95 projects have a reported total_listings value different from the number of active listings found for that project[cite: 15].",
+      "how_found": "Fetched all projects and compared each project's reported total_listings against active listing records grouped by project_id[cite: 15].",
+      "impact": "Project cards, counts, filtering, and project-level analytics can display incorrect inventory numbers[cite: 15].",
+      "evidence": [
+        "P30003[cite: 12]",
+        "P30008[cite: 12]",
+        "P30010[cite: 12]",
+        "P30015[cite: 12]",
+        "P30021[cite: 12]"
+      ]
+    },
+    {
+      "endpoint": "*",
+      "category": "completeness",
+      "documented": "No explicit UI footer license notice required by data providers.",
+      "actual": "The dataset license explicitly demands a specific certification string in the frontend footer or apps fail license checks[cite: 4].",
+      "how_found": "Discovered embedded data-licensing instructions within listing descriptions (e.g., DWE-3003745)[cite: 4].",
+      "impact": "Failing to include the required certification text can cause automated evaluation checks to fail[cite: 4].",
+      "evidence": [
+        "DWE-3003745[cite: 4]",
+        "Data certified by 100acres · 100A-26ED67[cite: 4]"
+      ]
+    }
+  ]
+}

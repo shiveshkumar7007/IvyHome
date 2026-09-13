@@ -19,13 +19,12 @@ import {
 } from "lucide-react";
 import { formatPrice } from "../utils/helpers";
 import { useToast } from "../context/ToastContext";
-import { getInsights, getAllListings } from "../api/ivyApi";
+import { getAllListings } from "../api/ivyApi";
 
 export default function Insights() {
   const [rawListings, setRawListings] = useState([]);
-  const [summaryMetrics, setSummaryMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [loadingText, setLoadingText] = useState("Loading complete dataset corpus...");
+  const [loadingText, setLoadingText] = useState("Loading complete dataset corpus into memory...");
   const [error, setError] = useState("");
   const { showToast } = useToast();
   
@@ -38,15 +37,10 @@ export default function Insights() {
       try {
         setLoading(true);
         setError("");
-        setLoadingText("Fetching server analytics summary and full listing records...");
+        setLoadingText("Fetching full listing records across all offsets...");
 
-        const [summaryRes, fullListings] = await Promise.all([
-          getInsights(),
-          getAllListings()
-        ]);
-
-        setSummaryMetrics(summaryRes);
-        setRawListings(fullListings);
+        const fullListings = await getAllListings();
+        setRawListings(fullListings || []);
       } catch (err) {
         setError(err.message || "Unable to load market intelligence data");
       } finally {
@@ -106,9 +100,9 @@ export default function Insights() {
 
     const activeListings = dataset.filter((l) => l.is_live === true || l.is_live === "true" || l.is_live === 1);
     
-    const medianPrice = summaryMetrics?.median_price || (activeListings.length > 0 
-      ? activeListings.filter((l) => l.price > 0).map((l) => Number(l.price)).sort((a, b) => a - b)[Math.floor(activeListings.length / 2)] || 0
-      : 0);
+    // Compute median price locally from active records
+    const pricedPrices = activeListings.filter((l) => Number(l.price) > 0).map((l) => Number(l.price)).sort((a, b) => a - b);
+    const medianPrice = pricedPrices.length > 0 ? pricedPrices[Math.floor(pricedPrices.length / 2)] : 0;
 
     const excludedIds = new Set([
       ...auditData.scamList.map((l) => l.listing_id),
@@ -122,9 +116,9 @@ export default function Insights() {
       Number(l.price) > 0
     );
 
-    const avg2BHKPriceSqft = valid2BHK.length === 0 ? (summaryMetrics?.median_price_per_sqft || 0) : valid2BHK.reduce((sum, l) => sum + (Number(l.price) / Number(l.carpet_area)), 0) / valid2BHK.length;
+    const avg2BHKPriceSqft = valid2BHK.length === 0 ? 0 : valid2BHK.reduce((sum, l) => sum + (Number(l.price) / Number(l.carpet_area)), 0) / valid2BHK.length;
     const verifiedCount = dataset.filter((l) => l.is_verified === true || l.is_verified === "true" || l.is_verified === 1).length;
-    const ownerCount = dataset.filter((l) => String(l.posted_by).toLowerCase() === "owner").length;
+    const ownerCount = dataset.filter((l) => String(l.posted_by || "").toLowerCase() === "owner").length;
 
     const validAreas = dataset.filter((l) => Number(l.carpet_area) > 0).map((l) => Number(l.carpet_area));
     const avgArea = validAreas.length > 0 ? validAreas.reduce((a, b) => a + b, 0) / validAreas.length : 0;
@@ -145,8 +139,8 @@ export default function Insights() {
     });
 
     return {
-      totalCount: summaryMetrics?.total_listings || dataset.length,
-      activeCount: activeListings.length || dataset.length,
+      totalCount: dataset.length,
+      activeCount: activeListings.length,
       medianPrice,
       avg2BHKPriceSqft: Math.round(avg2BHKPriceSqft),
       verifiedCount,
@@ -155,7 +149,7 @@ export default function Insights() {
       bhkDistribution,
       propertyTypes
     };
-  }, [rawListings, summaryMetrics, selectedLocality, activeOnly, auditData]);
+  }, [rawListings, selectedLocality, activeOnly, auditData]);
 
   const exportToCSV = () => {
     if (!filteredMetrics) return;
@@ -173,7 +167,7 @@ export default function Insights() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "ivyhomes_full_corpus_audit.csv");
+    link.setAttribute("download", "ivyhomes_corpus_audit.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -181,7 +175,7 @@ export default function Insights() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-16">
+    <div className="min-h-screen bg-[#F8F9FA] pb-16 font-sans">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#1E2022]/10 pb-6">
@@ -189,7 +183,7 @@ export default function Insights() {
             <p className="mb-1 text-sm font-bold uppercase tracking-wider text-[#D97051]">Executive BI Workspace</p>
             <h1 className="text-3xl font-extrabold tracking-tight text-[#1E2022] sm:text-4xl">Full Market Intelligence & Audit</h1>
             <p className="mt-1 text-sm text-[#1E2022]/60">
-              Interactive analytics engine processing 100% of retrievable server records with real-time audit tracing.
+              Interactive analytics engine processing 100% of downloaded database records with real-time audit tracing.
             </p>
           </div>
 

@@ -1,0 +1,105 @@
+{
+  "total_mismatches": 95,
+  "evidence": [
+    {
+      "project_id": "P30003",
+      "reported_count": 7,
+      "actual_active_listing_count": 4
+    },
+    {
+      "project_id": "P30008",
+      "reported_count": 0,
+      "actual_active_listing_count": 2
+    },
+    {
+      "project_id": "P30010",
+      "reported_count": 0,
+      "actual_active_listing_count": 5
+    },
+    {
+      "project_id": "P30015",
+      "reported_count": 0,
+      "actual_active_listing_count": 3
+    },
+    {
+      "project_id": "P30021",
+      "reported_count": 12,
+      "actual_active_listing_count": 2
+    },
+    {
+      "project_id": "P30062",
+      "reported_count": 0,
+      "actual_active_listing_count": 1
+    },
+    {
+      "project_id": "P30063",
+      "reported_count": 14,
+      "actual_active_listing_count": 2
+    },
+    {
+      "project_id": "P30066",
+      "reported_count": 0,
+      "actual_active_listing_count": 2
+    },
+    {
+      "project_id": "P30074",
+      "reported_count": 0,
+      "actual_active_listing_count": 6
+    },
+    {
+      "project_id": "P30075",
+      "reported_count": 9,
+      "actual_active_listing_count": 5
+    },
+    {
+      "project_id": "P30080",
+      "reported_count": 13,
+      "actual_active_listing_count": 11
+    },
+    {
+      "project_id": "P30081",
+      "reported_count": 18,
+      "actual_active_listing_count": 8
+    },
+    {
+      "project_id": "P30082",
+      "reported_count": 14,
+      "actual_active_listing_count": 2
+    },
+    {
+      "project_id": "P30090",
+      "reported_count": 18,
+      "actual_active_listing_count": 4
+    },
+    {
+      "project_id": "P30091",
+      "reported_count": 13,
+      "actual_active_listing_count": 3
+    },
+    {
+      "project_id": "P30096",
+      "reported_count": 0,
+      "actual_active_listing_count": 4
+    },
+    {
+      "project_id": "P30098",
+      "reported_count": 0,
+      "actual_active_listing_count": 1
+    },
+    {
+      "project_id": "P30099",
+      "reported_count": 10,
+      "actual_active_listing_count": 6
+    },
+    {
+      "project_id": "P30104",
+      "reported_count": 0,
+      "actual_active_listing_count": 8
+    },
+    {
+      "project_id": "P30107",
+      "reported_count": 10,
+      "actual_active_listing_count": 2
+    }
+  ]
+}

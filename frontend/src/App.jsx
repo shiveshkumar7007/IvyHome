@@ -11,6 +11,7 @@ import Favourites from "./pages/Favourites";
 import Rentals from "./pages/Rentals";
 import Projects from "./pages/Projects";
 import Insights from "./pages/Insights";
+import MapExplorer from './pages/MapExplorer';
 
 function Layout({ children }) {
   return (
@@ -42,6 +43,9 @@ function App() {
           
           <Route path="/favourites" element={<ProtectedRoute><Layout><Favourites /></Layout></ProtectedRoute>} />
           <Route path="/insights" element={<ProtectedRoute><Layout><Insights /></Layout></ProtectedRoute>} />
+
+          {/* Fixed: Wrapped MapExplorer inside ProtectedRoute & Layout so Navbar shows up */}
+          <Route path="/map" element={<ProtectedRoute><Layout><MapExplorer /></Layout></ProtectedRoute>} />
           
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />

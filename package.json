@@ -11,6 +11,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "leaflet": "^1.9.4",
+    "react-leaflet": "^5.0.0"
   }
 }

@@ -1,228 +1,417 @@
+// import { fixPropertyData } from "../utils/helpers";
+
+// let cachedDatabase = null;
+
+// async function loadLocalDatabase() {
+//   if (cachedDatabase && cachedDatabase.length > 0) {
+//     return cachedDatabase;
+//   }
+
+//   // Check sessionStorage for ultra-fast persistent caching across page transitions
+//   try {
+//     const sessionCached = sessionStorage.getItem("ivy_local_db_cache");
+//     if (sessionCached) {
+//       const parsed = JSON.parse(sessionCached);
+//       if (Array.isArray(parsed) && parsed.length > 0) {
+//         cachedDatabase = parsed;
+//         return cachedDatabase;
+//       }
+//     }
+//   } catch (e) {
+//     // Fallback on error
+//   }
+
+//   try {
+//     const res = await fetch('/listings.json');
+//     if (!res.ok) throw new Error("Failed to load local listings.json database");
+//     const raw = await res.json();
+    
+//     let items = [];
+//     if (Array.isArray(raw)) items = raw;
+//     else items = raw?.results || raw?.data || raw?.listings || raw?.projects || raw?.rentals || raw?.items || [];
+    
+//     cachedDatabase = items.map(fixPropertyData);
+
+//     // Save to sessionStorage for subsequent lightning-fast loads
+//     try {
+//       sessionStorage.setItem("ivy_local_db_cache", JSON.stringify(cachedDatabase));
+//     } catch (e) {
+//       // Storage safety limit
+//     }
+
+//     return cachedDatabase;
+//   } catch (err) {
+//     console.error("Local database load error:", err);
+//     return [];
+//   }
+// }
+
+// export async function isAuthenticated() {
+//   return true;
+// }
+
+// export function getAccessToken() {
+//   return "local-mock-token";
+// }
+
+// export function logout() {
+//   window.location.href = "/login";
+// }
+
+// export async function login(email, password) {
+//   return { access_token: "local-token", user: { email: email || "admin@ivy.homes" } };
+// }
+
+// export function extractItems(response) {
+//   if (Array.isArray(response)) return response.map(fixPropertyData);
+//   if (response && Array.isArray(response.results)) return response.results.map(fixPropertyData);
+//   if (response && Array.isArray(response.data)) return response.data.map(fixPropertyData);
+//   return [];
+// }
+
+// // --- Listings Database Layer ---
+// export async function getListings(params = {}) {
+//   const db = await loadLocalDatabase();
+//   let results = [...db];
+
+//   if (params.locality) {
+//     const loc = params.locality.toLowerCase();
+//     results = results.filter(item => String(item.locality || "").toLowerCase().includes(loc));
+//   }
+//   if (params.bedroom || params.bhk) {
+//     const bhk = Number(params.bedroom || params.bhk);
+//     results = results.filter(item => Number(item.bedroom) === bhk);
+//   }
+
+//   const limit = Number(params.limit);
+//   const offset = Number(params.offset) || 0;
+//   if (!isNaN(limit)) {
+//     return results.slice(offset, offset + limit);
+//   }
+
+//   return results;
+// }
+
+// export async function getAllListings(params = {}) {
+//   return loadLocalDatabase();
+// }
+
+// export async function getListing(id) {
+//   const db = await loadLocalDatabase();
+//   const found = db.find(item => String(item.listing_id || item.id) === String(id));
+//   if (!found) throw new Error(`Listing not found: ${id}`);
+//   return found;
+// }
+
+// // --- Rentals Database Layer ---
+// export async function getRentals(params = {}) {
+//   const db = await loadLocalDatabase();
+//   let results = db.filter(item => {
+//     const type = String(item.property_type || item.category || "").toLowerCase();
+//     return type.includes('rent') || type.includes('lease') || Number(item.price) < 150000;
+//   });
+//   if (results.length === 0) results = db;
+
+//   const limit = Number(params.limit);
+//   const offset = Number(params.offset) || 0;
+//   if (!isNaN(limit)) {
+//     return results.slice(offset, offset + limit);
+//   }
+
+//   return results;
+// }
+
+// export async function getAllRentals(params = {}) {
+//   const db = await loadLocalDatabase();
+//   const rentals = db.filter(item => {
+//     const type = String(item.property_type || item.category || "").toLowerCase();
+//     return type.includes('rent') || type.includes('lease') || Number(item.price) < 150000;
+//   });
+//   return rentals.length > 0 ? rentals : db;
+// }
+
+// export async function getRental(id) {
+//   return getListing(id);
+// }
+
+// // --- Projects Database Layer ---
+// export async function getProjects(params = {}) {
+//   const db = await loadLocalDatabase();
+//   let results = db.filter(item => item.project_id || item.project_name);
+//   if (results.length === 0) results = db;
+
+//   const limit = Number(params.limit);
+//   const offset = Number(params.offset) || 0;
+//   if (!isNaN(limit)) {
+//     return results.slice(offset, offset + limit);
+//   }
+
+//   return results;
+// }
+
+// export async function getAllProjects(params = {}) {
+//   const db = await loadLocalDatabase();
+//   const projects = db.filter(item => item.project_id || item.project_name);
+//   return projects.length > 0 ? projects : db;
+// }
+
+// export async function getProject(id) {
+//   return getListing(id);
+// }
+
+// // --- Favourites / Favorites Management ---
+// function getUserFavKey() {
+//   return `ivy_favs_local`;
+// }
+
+// export async function getFavourites() {
+//   try {
+//     const favs = JSON.parse(localStorage.getItem(getUserFavKey()) || "[]");
+//     return favs.map(fixPropertyData);
+//   } catch {
+//     return [];
+//   }
+// }
+// export const getFavorites = getFavourites;
+
+// export async function addFavourite(listingId) {
+//   const db = await loadLocalDatabase();
+//   const key = getUserFavKey();
+//   const favs = JSON.parse(localStorage.getItem(key) || "[]");
+  
+//   if (!favs.find(f => String(f.listing_id || f.id || f.project_id) === String(listingId))) {
+//     const item = db.find(f => String(f.listing_id || f.id || f.project_id) === String(listingId));
+//     if (item) {
+//       favs.push(item);
+//       localStorage.setItem(key, JSON.stringify(favs));
+//     }
+//   }
+//   return { success: true };
+// }
+// export const addFavorite = addFavourite;
+
+// export async function removeFavourite(listingId) {
+//   const key = getUserFavKey();
+//   let favs = JSON.parse(localStorage.getItem(key) || "[]");
+//   favs = favs.filter(f => String(f.listing_id || f.id || f.project_id) !== String(listingId));
+//   localStorage.setItem(key, JSON.stringify(favs));
+//   return { success: true };
+// }
+// export const removeFavorite = removeFavourite;
+
+// // --- Insights / Analytics Summary ---
+// export async function getInsights() {
+//   const db = await loadLocalDatabase();
+//   const prices = db.map(l => Number(l.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
+//   return {
+//     total_listings: db.length,
+//     median_price: prices.length > 0 ? prices[Math.floor(prices.length / 2)] : 0,
+//     median_price_per_sqft: 6500
+//   };
+// }
+
 import { fixPropertyData } from "../utils/helpers";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://solve.ivy.homes";
-const API_KEY = import.meta.env.VITE_API_KEY;
+// In-memory Promise lock to prevent parallel fetch triggers
+let fetchPromise = null;
 
-// --- Native Cookie Helpers ---
-function setCookie(name, value, minutes) {
-  let expires = "";
-  if (minutes) {
-    const date = new Date();
-    date.setTime(date.getTime() + minutes * 60 * 1000);
-    expires = "; expires=" + date.toUTCString();
+async function loadLocalDatabase() {
+  // 1. If already in window memory, return instantly in 0ms
+  if (window.__IVY_DB_CACHE__ && window.__IVY_DB_CACHE__.length > 0) {
+    return window.__IVY_DB_CACHE__;
   }
-  document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Strict";
-}
 
-function getCookie(name) {
-  const nameEQ = name + "=";
-  const ca = document.cookie.split(";");
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === " ") c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  // 2. If a fetch is already underway, await it so we don't fetch twice
+  if (fetchPromise) {
+    return fetchPromise;
   }
-  return null;
+
+  fetchPromise = (async () => {
+    try {
+      const res = await fetch('/listings.json');
+      if (!res.ok) throw new Error("Failed to load local listings.json database");
+      const raw = await res.json();
+      
+      let items = [];
+      if (Array.isArray(raw)) items = raw;
+      else items = raw?.results || raw?.data || raw?.listings || raw?.projects || raw?.rentals || raw?.items || [];
+      
+      const fixed = items.map(fixPropertyData);
+      
+      // Store globally in RAM
+      window.__IVY_DB_CACHE__ = fixed;
+      return fixed;
+    } catch (err) {
+      console.error("Local database load error:", err);
+      return [];
+    } finally {
+      fetchPromise = null;
+    }
+  })();
+
+  return fetchPromise;
 }
 
-function eraseCookie(name) {
-  document.cookie = name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-}
-
-export function isAuthenticated() {
-  return !!getCookie("access_token");
+export async function isAuthenticated() {
+  return true;
 }
 
 export function getAccessToken() {
-  return getCookie("access_token");
+  return "local-mock-token";
 }
 
 export function logout() {
-  eraseCookie("access_token");
-  eraseCookie("user_email");
   window.location.href = "/login";
 }
 
-async function request(path, options = {}) {
-  const headers = {
-    "Content-Type": "application/json",
-    "X-API-Key": API_KEY,
-    ...(options.headers || {})
-  };
-
-  let token = getCookie("access_token");
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const baseUrlClean = BASE_URL.replace(/\/+$/, "");
-  const pathClean = path.startsWith("/") ? path : `/${path}`;
-  const targetUrl = new URL(`${baseUrlClean}${pathClean}`);
-  
-  if (API_KEY && !targetUrl.searchParams.has("api_key")) {
-    targetUrl.searchParams.set("api_key", API_KEY);
-  }
-
-  let response = await fetch(targetUrl.toString(), { ...options, headers });
-
-  if (response.status === 401) {
-    logout();
-    throw new Error("Session expired. Please log in again.");
-  }
-
-  const text = await response.text();
-  
-  if (text.trim().startsWith("<")) {
-    throw new Error(`Server returned HTML instead of JSON (${response.status}). Verify API route.`);
-  }
-
-  let data = {};
-  try { 
-    data = text ? JSON.parse(text) : {}; 
-  } catch { 
-    data = {}; 
-  }
-
-  if (!response.ok) {
-    throw new Error(data.detail || data.message || `Request failed with status ${response.status}`);
-  }
-  
-  return data;
-}
-
 export async function login(email, password) {
-  const data = await request("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-
-  setCookie("access_token", data.access_token || data.token, 1440);
-  if (data.user?.email || email) {
-    setCookie("user_email", data.user?.email || email, 1440);
-  }
-
-  return data;
+  return { access_token: "local-token", user: { email: email || "admin@ivy.homes" } };
 }
 
 export function extractItems(response) {
-  let items = [];
-  if (Array.isArray(response)) items = response;
-  else items = response?.results || response?.data || response?.listings || response?.projects || response?.rentals || response?.items || [];
-  return items.map(fixPropertyData);
+  if (Array.isArray(response)) return response.map(fixPropertyData);
+  if (response && Array.isArray(response.results)) return response.results.map(fixPropertyData);
+  if (response && Array.isArray(response.data)) return response.data.map(fixPropertyData);
+  return [];
 }
 
+// --- Listings Database Layer ---
 export async function getListings(params = {}) {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      query.set(key, value);
-    }
-  });
-  
-  const queryString = query.toString();
-  const path = queryString ? `/v1/listings?${queryString}` : "/v1/listings";
-  return request(path);
-}
+  const db = await loadLocalDatabase();
+  let results = [...db];
 
-// Helper to fetch the complete dataset across all pages for the Insights audit engine
-export async function getAllListings(params = {}) {
-  let allItems = [];
-  let limit = 200; 
-
-  const initialRes = await getListings({ ...params, page: 1, limit });
-  const initialItems = extractItems(initialRes);
-  allItems = allItems.concat(initialItems);
-  
-  const total = initialRes?.total || allItems.length;
-  
-  if (total > allItems.length) {
-    const totalPages = Math.ceil(total / limit);
-    const promises = [];
-
-    for (let p = 2; p <= totalPages; p++) {
-      promises.push(getListings({ ...params, page: p, limit }));
-    }
-
-    const results = await Promise.all(promises);
-    results.forEach((res) => {
-      allItems = allItems.concat(extractItems(res));
-    });
+  if (params.locality) {
+    const loc = params.locality.toLowerCase();
+    results = results.filter(item => String(item.locality || "").toLowerCase().includes(loc));
+  }
+  if (params.bedroom || params.bhk) {
+    const bhk = Number(params.bedroom || params.bhk);
+    results = results.filter(item => Number(item.bedroom) === bhk);
   }
 
-  return allItems;
+  const limit = Number(params.limit);
+  const offset = Number(params.offset) || 0;
+  if (!isNaN(limit)) {
+    return results.slice(offset, offset + limit);
+  }
+
+  return results;
+}
+
+export async function getAllListings(params = {}) {
+  return loadLocalDatabase();
 }
 
 export async function getListing(id) {
-  const data = await request(`/v1/listings/${encodeURIComponent(id)}`);
-  return fixPropertyData(data);
+  const db = await loadLocalDatabase();
+  const found = db.find(item => String(item.listing_id || item.id) === String(id));
+  if (!found) throw new Error(`Listing not found: ${id}`);
+  return found;
 }
 
+// --- Rentals Database Layer ---
 export async function getRentals(params = {}) {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") query.set(key, value);
+  const db = await loadLocalDatabase();
+  let results = db.filter(item => {
+    const type = String(item.property_type || item.category || "").toLowerCase();
+    return type.includes('rent') || type.includes('lease') || Number(item.price) < 150000;
   });
-  const queryString = query.toString();
-  const path = queryString ? `/v1/rentals?${queryString}` : "/v1/rentals";
-  return request(path);
+  if (results.length === 0) results = db;
+
+  const limit = Number(params.limit);
+  const offset = Number(params.offset) || 0;
+  if (!isNaN(limit)) {
+    return results.slice(offset, offset + limit);
+  }
+
+  return results;
+}
+
+export async function getAllRentals(params = {}) {
+  const db = await loadLocalDatabase();
+  const rentals = db.filter(item => {
+    const type = String(item.property_type || item.category || "").toLowerCase();
+    return type.includes('rent') || type.includes('lease') || Number(item.price) < 150000;
+  });
+  return rentals.length > 0 ? rentals : db;
 }
 
 export async function getRental(id) {
-  const data = await request(`/v1/rentals/${encodeURIComponent(id)}`);
-  return fixPropertyData(data);
+  return getListing(id);
 }
 
+// --- Projects Database Layer ---
 export async function getProjects(params = {}) {
-  const query = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") query.set(key, value);
-  });
-  const queryString = query.toString();
-  const path = queryString ? `/v1/projects?${queryString}` : "/v1/projects";
-  return request(path);
+  const db = await loadLocalDatabase();
+  let results = db.filter(item => item.project_id || item.project_name);
+  if (results.length === 0) results = db;
+
+  const limit = Number(params.limit);
+  const offset = Number(params.offset) || 0;
+  if (!isNaN(limit)) {
+    return results.slice(offset, offset + limit);
+  }
+
+  return results;
+}
+
+export async function getAllProjects(params = {}) {
+  const db = await loadLocalDatabase();
+  const projects = db.filter(item => item.project_id || item.project_name);
+  return projects.length > 0 ? projects : db;
 }
 
 export async function getProject(id) {
-  const data = await request(`/v1/projects/${encodeURIComponent(id)}`);
-  return fixPropertyData(data);
+  return getListing(id);
 }
 
+// --- Favourites / Favorites Management ---
 function getUserFavKey() {
-  const email = getCookie("user_email") || 'guest';
-  return `ivy_favs_${email}`;
+  return `ivy_favs_local`;
 }
 
 export async function getFavourites() {
-  const favs = JSON.parse(localStorage.getItem(getUserFavKey()) || "[]");
-  return favs.map(fixPropertyData);
+  try {
+    const favs = JSON.parse(localStorage.getItem(getUserFavKey()) || "[]");
+    return favs.map(fixPropertyData);
+  } catch {
+    return [];
+  }
 }
+export const getFavorites = getFavourites;
 
 export async function addFavourite(listingId) {
+  const db = await loadLocalDatabase();
   const key = getUserFavKey();
   const favs = JSON.parse(localStorage.getItem(key) || "[]");
   
-  if (!favs.find(f => (f.listing_id || f.project_id || f.id) === listingId)) {
-    let listingData;
-    if (listingId.startsWith('P')) listingData = await getProject(listingId);
-    else if (listingId.startsWith('R')) listingData = await getRental(listingId);
-    else listingData = await getListing(listingId);
-    
-    favs.push(listingData);
-    localStorage.setItem(key, JSON.stringify(favs));
+  if (!favs.find(f => String(f.listing_id || f.id || f.project_id) === String(listingId))) {
+    const item = db.find(f => String(f.listing_id || f.id || f.project_id) === String(listingId));
+    if (item) {
+      favs.push(item);
+      localStorage.setItem(key, JSON.stringify(favs));
+    }
   }
   return { success: true };
 }
+export const addFavorite = addFavourite;
 
 export async function removeFavourite(listingId) {
   const key = getUserFavKey();
   let favs = JSON.parse(localStorage.getItem(key) || "[]");
-  favs = favs.filter(f => (f.listing_id || f.id || f.project_id) !== listingId);
+  favs = favs.filter(f => String(f.listing_id || f.id || f.project_id) !== String(listingId));
   localStorage.setItem(key, JSON.stringify(favs));
   return { success: true };
 }
+export const removeFavorite = removeFavourite;
 
+// --- Insights / Analytics Summary ---
 export async function getInsights() {
-  try { 
-    return await request("/v1/analytics/summary"); 
-  } catch (error) { 
-    return null; 
-  }
+  const db = await loadLocalDatabase();
+  const prices = db.map(l => Number(l.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
+  return {
+    total_listings: db.length,
+    median_price: prices.length > 0 ? prices[Math.floor(prices.length / 2)] : 0,
+    median_price_per_sqft: 6500
+  };
 }

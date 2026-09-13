@@ -9,7 +9,6 @@ frontend/dist/
 build/
 
 data/listings.json
-frontend/public/listings.json
 analysis-results.json
 
 .DS_Store
