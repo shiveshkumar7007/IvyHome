@@ -382,40 +382,60 @@ export default function Favourites() {
           </div>
         )}
 
-        {/* Compare Modal */}
+        {/* Compare Modal - FIXED ALIGNMENT */}
         <dialog id="compare-modal" className="w-full max-w-5xl rounded-2xl p-6 backdrop:bg-black/50 shadow-2xl">
           <div className="flex justify-between items-center mb-6 border-b pb-4">
-            <h2 className="text-2xl font-bold">Property Comparison</h2>
+            <h2 className="text-2xl font-bold text-[#1E2022]">Property Comparison</h2>
             <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition" onClick={() => document.getElementById('compare-modal').close()}>
               <X size={20}/>
             </button>
           </div>
           
-          <div className="grid grid-cols-4 gap-6 text-sm">
-            <div className="font-bold text-gray-500 space-y-6 pt-32 text-right pr-4 border-r border-gray-100">
-              <p>Price</p><p>Area</p><p>Bedrooms</p><p>Furnishing</p><p>Property Type</p><p>Facing</p>
-            </div>
-            
-            {compareList.map(p => {
-              const isRental = p.__type === 'rental' || String(p.listing_id || p.id).startsWith("R");
-              const isProject = p.__type === 'project' || String(p.project_id || p.id).startsWith("P") || p.project_status;
-              
-              return (
-                <div key={p.listing_id || p.project_id || p.id} className="space-y-6">
-                  <img src={p.image_url || p.image || "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80"} className="h-28 w-full object-cover rounded-xl mb-4 shadow-sm" />
-                  <p className="font-bold text-lg line-clamp-2 leading-tight h-12">{p.apartment_name || p.project_name || p.name || p.title}</p>
-                  
-                  <p className="font-bold text-lg text-[#D97051]">
-                    {isRental ? `₹${(p.price || 0).toLocaleString("en-IN")} / mo` : formatPrice(p.price || p.price_min)}
-                  </p>
-                  <p className="font-medium">{p.carpet_area || p.min_area_sqft || "N/A"} sq.ft</p>
-                  <p className="font-medium">{p.bedroom || p.bhk || "N/A"} Beds</p>
-                  <p className="capitalize font-medium">{p.furnishing?.replace("-", " ") || "N/A"}</p>
-                  <p className="capitalize font-medium">{isRental ? `Rental ${p.property_type || ""}` : (isProject ? "Project" : p.property_type || "Property")}</p>
-                  <p className="capitalize font-medium">{p.facing_direction || "N/A"}</p>
+          <div className="w-full text-sm">
+            {/* Header Row: Images & Titles */}
+            <div className="grid grid-cols-4 gap-6 mb-6">
+              <div className="col-span-1 pr-4 border-r border-gray-100"></div>
+              {compareList.map(p => (
+                <div key={`header-${p.listing_id || p.project_id || p.id}`} className="flex flex-col">
+                  <img src={p.image_url || p.image || "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80"} className="h-32 w-full object-cover rounded-xl mb-4 shadow-sm" alt="Property" />
+                  <p className="font-bold text-lg text-[#1E2022] line-clamp-2 leading-tight h-14">{p.apartment_name || p.project_name || p.name || p.title}</p>
                 </div>
-              )
-            })}
+              ))}
+            </div>
+
+            {/* Structured Data Rows */}
+            {[
+              { 
+                label: "Price", 
+                render: (p) => {
+                  const isRental = p.__type === 'rental' || String(p.listing_id || p.id).startsWith("R");
+                  return <span className="font-extrabold text-xl text-[#D97051]">{isRental ? `₹${(p.price || 0).toLocaleString("en-IN")} / mo` : formatPrice(p.price || p.price_min)}</span>;
+                }
+              },
+              { label: "Area", render: (p) => `${p.carpet_area || p.min_area_sqft || "N/A"} sq.ft` },
+              { label: "Bedrooms", render: (p) => `${p.bedroom || p.bhk || "N/A"} Beds` },
+              { label: "Furnishing", render: (p) => <span className="capitalize">{p.furnishing?.replace("-", " ") || "N/A"}</span> },
+              { 
+                label: "Property Type", 
+                render: (p) => {
+                  const isRental = p.__type === 'rental' || String(p.listing_id || p.id).startsWith("R");
+                  const isProject = p.__type === 'project' || String(p.project_id || p.id).startsWith("P") || p.project_status;
+                  return <span className="capitalize">{isRental ? `Rental ${p.property_type || ""}` : (isProject ? "Project" : p.property_type || "Property")}</span>;
+                }
+              },
+              { label: "Facing", render: (p) => <span className="capitalize">{p.facing_direction || "N/A"}</span> }
+            ].map((row, idx) => (
+              <div key={idx} className="grid grid-cols-4 gap-6 py-4 border-t border-gray-100">
+                <div className="font-bold text-gray-500 text-right pr-4 border-r border-gray-100 flex items-center justify-end">
+                  {row.label}
+                </div>
+                {compareList.map(p => (
+                  <div key={`data-${p.listing_id || p.project_id || p.id}-${idx}`} className="font-semibold text-[#1E2022] flex items-center">
+                    {row.render(p)}
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         </dialog>
       </div>
