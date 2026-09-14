@@ -1,13 +1,15 @@
 import { useEffect, useState, useMemo } from "react";
-import { getFavourites, removeFavourite } from "../api/ivyApi";
+import { getFavourites, removeFavourite, addFavourite } from "../api/ivyApi";
 import { ListingCard } from "../components/ListingCards";
-import { Scale, X } from "lucide-react";
+import { Scale, X, Heart, User, Compass, Building, Maximize2, Layers } from "lucide-react";
 import { formatPrice } from "../utils/helpers";
 import { useToast } from "../context/ToastContext";
+import { Link } from "react-router-dom";
 
 export default function Favourites() {
   const [favourites, setFavourites] = useState([]);
   const [compareList, setCompareList] = useState([]);
+  const [selectedListing, setSelectedListing] = useState(null);
   const { showToast } = useToast();
 
   // Filter States (Including Category: Listing, Rental, Project)
@@ -22,7 +24,34 @@ export default function Favourites() {
     getFavourites().then(setFavourites);
   }, []);
 
-  const toggleCompare = (listing) => {
+  const isCurrentFavourite = useMemo(() => {
+    if (!selectedListing) return false;
+    const id = selectedListing.listing_id || selectedListing.project_id || selectedListing.id;
+    return favourites.some(f => String(f.listing_id || f.id || f.project_id) === String(id));
+  }, [favourites, selectedListing]);
+
+  async function handleToggleFavourite() {
+    if (!selectedListing) return;
+    const id = selectedListing.listing_id || selectedListing.project_id || selectedListing.id;
+    try {
+      if (isCurrentFavourite) {
+        await removeFavourite(id);
+        setFavourites(prev => prev.filter(f => String(f.listing_id || f.id || f.project_id) !== String(id)));
+        setCompareList(c => c.filter(x => (x.listing_id || x.project_id || x.id) !== id));
+        showToast("Removed from Favourites", "success");
+      } else {
+        await addFavourite(id);
+        setFavourites(prev => [...prev, selectedListing]);
+        showToast("Added to Favourites", "success");
+      }
+    } catch (err) {
+      console.error("Failed to update favourite", err);
+      showToast("Failed to update favourite", "error");
+    }
+  }
+
+  const toggleCompare = (listing, e) => {
+    if (e) e.stopPropagation();
     setCompareList(prev => {
       const exists = prev.find(p => (p.listing_id || p.project_id || p.id) === (listing.listing_id || listing.project_id || listing.id));
       if (exists) return prev.filter(p => (p.listing_id || p.project_id || p.id) !== (listing.listing_id || listing.project_id || listing.id));
@@ -36,10 +65,14 @@ export default function Favourites() {
 
   const handleRemoveFav = async (id, e) => {
     if (e) e.preventDefault();
+    if (e) e.stopPropagation();
     try {
       await removeFavourite(id);
       setFavourites(f => f.filter(x => (x.listing_id || x.project_id || x.id) !== id));
       setCompareList(c => c.filter(x => (x.listing_id || x.project_id || x.id) !== id));
+      if (selectedListing && (selectedListing.listing_id || selectedListing.project_id || selectedListing.id) === id) {
+        setSelectedListing(null);
+      }
       showToast("Removed from Favourites", "success");
     } catch (err) {
       showToast("Failed to remove favourite", "error");
@@ -51,7 +84,6 @@ export default function Favourites() {
       const query = search.trim().toLowerCase();
       const matchesSearch = !query || String(item.apartment_name || item.project_name || item.name || "").toLowerCase().includes(query) || String(item.locality || "").toLowerCase().includes(query);
       
-      // Determine item category helper
       const isRental = item.__type === 'rental' || String(item.listing_id || item.id || "").startsWith("R");
       const isProject = item.__type === 'project' || String(item.project_id || item.id || "").startsWith("P") || item.project_status;
       const isListing = !isRental && !isProject;
@@ -80,7 +112,124 @@ export default function Favourites() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-20 font-sans relative overflow-hidden">
+      
+      {/* Left Sliding Sidebar Drawer for Property Details */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-full sm:w-[440px] bg-white shadow-2xl border-r border-gray-200 transform transition-transform duration-300 ease-in-out flex flex-col ${selectedListing ? 'translate-x-0' : '-translate-x-full'}`}>
+        {selectedListing && (
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-[#FDF1EA]">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 bg-[#D97051] text-white rounded-lg">
+                    {selectedListing.project_status || selectedListing.property_type || 'Property'}
+                  </span>
+                  <button 
+                    onClick={handleToggleFavourite} 
+                    className="p-1.5 rounded-full bg-white hover:bg-gray-100 transition shadow-sm"
+                  >
+                    <Heart size={18} className={isCurrentFavourite ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-500"} />
+                  </button>
+                </div>
+                <h2 className="text-xl font-black text-[#1E2022] mt-2">{selectedListing.apartment_name || selectedListing.project_name || selectedListing.name || selectedListing.title || 'Property Detail'}</h2>
+              </div>
+              <button 
+                onClick={() => setSelectedListing(null)}
+                className="p-2 rounded-xl bg-white text-gray-500 hover:text-[#D97051] hover:bg-gray-100 transition shadow-sm"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 flex-1 overflow-y-auto space-y-4">
+              {(selectedListing.image_url || selectedListing.image) && (
+                <img src={selectedListing.image_url || selectedListing.image} alt="Property" className="w-full h-40 rounded-2xl object-cover border border-gray-100" />
+              )}
+
+              <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Price</p>
+                  <p className="text-xl font-black text-[#059669]">
+                    {selectedListing.__type === 'rental' || String(selectedListing.listing_id || '').startsWith("R") 
+                      ? `₹${(selectedListing.price || 0).toLocaleString("en-IN")} / mo` 
+                      : formatPrice(selectedListing.price || selectedListing.price_min)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Locality</p>
+                  <p className="text-xs font-bold text-[#1E2022] capitalize">📍 {selectedListing.locality || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2">
+                  <Building size={16} className="text-[#D97051]" />
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase font-bold">Type / Builder</p>
+                    <p className="font-bold text-[#1E2022]">{selectedListing.builder_name || selectedListing.property_type || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2">
+                  <Maximize2 size={16} className="text-[#D97051]" />
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase font-bold">Area</p>
+                    <p className="font-bold text-[#1E2022]">{selectedListing.carpet_area || selectedListing.min_area_sqft || '--'} sq.ft</p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2">
+                  <Compass size={16} className="text-[#D97051]" />
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase font-bold">Facing</p>
+                    <p className="font-bold text-[#1E2022] capitalize">{selectedListing.facing_direction || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2">
+                  <Layers size={16} className="text-[#D97051]" />
+                  <div>
+                    <p className="text-[9px] text-gray-400 uppercase font-bold">Bedrooms</p>
+                    <p className="font-bold text-[#1E2022]">{selectedListing.bedroom || selectedListing.bhk || '--'} BHK</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#FDF1EA]/50 rounded-2xl border border-[#D97051]/20 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-[#D97051] text-white flex items-center justify-center font-bold text-sm">
+                    {selectedListing.posted_by_name ? selectedListing.posted_by_name.charAt(0) : <User size={16} />}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">Contact Info</p>
+                    <p className="text-xs font-bold text-[#1E2022]">{selectedListing.posted_by_name || selectedListing.builder_name || "Sales Team"}</p>
+                    {selectedListing.posted_by_contact && (
+                      <p className="text-[11px] font-semibold text-[#059669]">📞 {selectedListing.posted_by_contact}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedListing.description && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Description</p>
+                  <p className="text-xs text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100 line-clamp-3">{selectedListing.description}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-white">
+              <Link 
+                to={`/listings/${selectedListing.listing_id || selectedListing.id || selectedListing.project_id}`}
+                className="w-full py-3 rounded-xl bg-[#D97051] text-white text-center text-xs font-bold shadow-md hover:bg-[#c26245] transition flex items-center justify-center gap-2"
+              >
+                View Full Page Details &rarr;
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="mx-auto max-w-7xl px-4 py-8">
         <h1 className="text-3xl font-bold mb-8 text-[#1E2022]">Your Favourites</h1>
         
@@ -190,12 +339,12 @@ export default function Favourites() {
                 const isSelected = compareList.some(p => (p.listing_id || p.project_id || p.id) === id);
                 
                 return (
-                  <div key={id} className="relative h-full">
-                    <div className="absolute top-4 left-4 z-20 flex items-center justify-center bg-white rounded-lg shadow-md p-1.5 border border-gray-100">
+                  <div key={id} className="relative h-full cursor-pointer" onClick={() => setSelectedListing(listing)}>
+                    <div className="absolute top-4 left-4 z-20 flex items-center justify-center bg-white rounded-lg shadow-md p-1.5 border border-gray-100" onClick={(e) => e.stopPropagation()}>
                       <input 
                         type="checkbox" 
                         checked={isSelected}
-                        onChange={() => toggleCompare(listing)}
+                        onChange={(e) => toggleCompare(listing, e)}
                         className="w-5 h-5 accent-[#D97051] cursor-pointer"
                       />
                     </div>
