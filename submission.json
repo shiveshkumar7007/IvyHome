@@ -236,24 +236,6 @@
     },
     {
       "endpoint": "/v1/listings",
-      "category": "data_quality",
-      "documented": "Listings returned by this endpoint are described as active sale listings that are safe to show to users.",
-      "actual": "28 retrievable listings contain values that cannot describe a real property, in four equal-sized groups of 7: negative prices; carpet_area greater than super_built_up_area; a floor number greater than total_floors (excluding plot listings, where 0/0 is normal); and listings whose latitude and longitude are swapped, placing the property far outside India (e.g. a Pune listing recorded at latitude ~73.8, longitude ~18.6, when every genuine listing in this city falls within latitude ~18.36-18.68 and longitude ~73.70-74.02).",
-      "how_found": "Ran numeric consistency checks (price > 0, carpet_area <= super_built_up_area, floor <= total_floors for non-plot listings) against all 3,800 retrievable listing records, plus a bounding-box check on latitude/longitude against India's coordinate range and against this city's own observed coordinate cluster.",
-      "impact": "Showing these records as-is exposes users to impossible prices, sizes, floor numbers, or map locations (a property pin placed outside India).",
-      "evidence": [
-        "100-3000174",
-        "100-3000236",
-        "100-3001067",
-        "MAG-3000020",
-        "SQU-3000026",
-        "ZER-3000380",
-        "ZER-3003055",
-        "DWE-3001835"
-      ]
-    },
-    {
-      "endpoint": "/v1/listings",
       "category": "fraud",
       "documented": "The endpoint is described as returning active sale listings that are safe to show to users.",
       "actual": "74 retrievable listings ask for an upfront booking amount or token amount, or state that a site visit is only possible after that payment is made \u2014 a pattern consistent with listings that exist to collect enquiries or payments rather than sell a real unit.",
@@ -321,6 +303,74 @@
         "R3000005",
         "R3000006",
         "R3000007"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "data_quality",
+      "documented": "Listings returned by this endpoint are described as active sale listings that are safe to show to users.",
+      "actual": "7 retrievable listings have a negative price.",
+      "how_found": "Checked price > 0 against all 3,800 retrievable listing records.",
+      "impact": "Displaying a negative price to a user is nonsensical and undermines trust in every other price shown by the app.",
+      "evidence": [
+        "100-3000174",
+        "100-3002344",
+        "100-3003022",
+        "MAG-3001979",
+        "MAG-3001986",
+        "SQU-3000419",
+        "SQU-3000591"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "data_quality",
+      "documented": "Listings returned by this endpoint are described as active sale listings that are safe to show to users.",
+      "actual": "7 retrievable listings have carpet_area greater than super_built_up_area \u2014 the carpet area (space inside the walls) cannot exceed the super built-up area (carpet area plus common areas), by definition.",
+      "how_found": "Checked carpet_area <= super_built_up_area (after converting MAG-prefixed listings' areas from square metres) against all 3,800 retrievable listing records.",
+      "impact": "Showing these as-is presents an impossible floor plan and can inflate any per-sqft figure computed from carpet_area.",
+      "evidence": [
+        "100-3000236",
+        "100-3000608",
+        "DWE-3000235",
+        "DWE-3000299",
+        "DWE-3001849",
+        "MAG-3001263",
+        "ZER-3000380"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "data_quality",
+      "documented": "Listings returned by this endpoint are described as active sale listings that are safe to show to users.",
+      "actual": "7 retrievable listings have a floor number greater than total_floors \u2014 a unit on a floor that doesn't exist in its own building. Plot listings are correctly excluded from this check: every plot has floor: 0 and total_floors: 0, which is normal for land with no building on it, not an error.",
+      "how_found": "Checked floor <= total_floors for all non-plot listings, across all 3,800 retrievable listing records.",
+      "impact": "Displaying a floor above the building's own stated height is an obvious, visible error on the listing detail page.",
+      "evidence": [
+        "100-3001067",
+        "100-3001543",
+        "100-3001548",
+        "DWE-3001307",
+        "DWE-3003186",
+        "MAG-3000932",
+        "SQU-3001698"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "data_quality",
+      "documented": "Listings returned by this endpoint are described as active sale listings that are safe to show to users; every listing corresponds to exactly one physical property with a latitude and longitude.",
+      "actual": "7 retrievable listings have latitude and longitude swapped, placing the property far outside India entirely (e.g. recorded as latitude ~73.8, longitude ~18.6, which is open ocean near Antarctica, not Pune). Every genuine listing in this city clusters at latitude ~18.36-18.68, longitude ~73.70-74.02; these seven have the two fields transposed. Checked and confirmed clean: 0 such records in /v1/rentals (1,450 checked) and 0 in /v1/projects (440 checked) \u2014 this bug is isolated to /v1/listings.",
+      "how_found": "Bounding-box check (latitude/longitude within India's real geographic range) against all 3,800 retrievable listing records, then repeated the same check against /v1/rentals and /v1/projects to confirm the bug's scope.",
+      "impact": "Any map view (property pin, locality-based search, distance sorting) built on these coordinates places the pin off the map entirely, or silently breaks distance/locality calculations that assume valid coordinates.",
+      "evidence": [
+        "DWE-3001835",
+        "MAG-3000020",
+        "SQU-3000026",
+        "SQU-3001297",
+        "SQU-3001738",
+        "SQU-3003195",
+        "ZER-3003055"
       ]
     }
   ]

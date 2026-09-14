@@ -19,6 +19,7 @@ import {
 import { formatPrice } from "../utils/helpers";
 import { useToast } from "../context/ToastContext";
 import { getAllListings, getAllRentals, getAllProjects } from "../api/ivyApi";
+import { findCoordinateAnomalies } from "../utils/insights";
 
 export default function Insights() {
   const [rawListings, setRawListings] = useState([]);
@@ -108,6 +109,14 @@ export default function Insights() {
 
     return { scamList, corruptList };
   }, [combinedCorpus]);
+
+  // Extract coordinate anomalies for the 3rd card
+  const coordinateAnomalies = useMemo(() => {
+    return findCoordinateAnomalies(rawListings).map(l => ({
+      ...l,
+      flagReason: "Latitude/Longitude swapped (Out of India / Antarctica)"
+    }));
+  }, [rawListings]);
 
   const filteredMetrics = useMemo(() => {
     let dataset = combinedCorpus;
@@ -461,7 +470,7 @@ export default function Insights() {
                   Security & Integrity Radar (Click card to audit)
                 </h2>
               </div>
-              <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-3">
                 <div 
                   onClick={() => setInspectModal({ title: "Flagged Fraudulent / Advance-Payment Records", items: auditData.scamList })} 
                   className={`rounded-2xl p-6 shadow-sm border border-gray-200 border-l-4 border-l-red-500 cursor-pointer transition hover:-translate-y-1 hover:shadow-md ${auditData.scamList.length > 0 ? 'bg-red-50/70 border-red-300' : 'bg-white'}`}
@@ -490,6 +499,21 @@ export default function Insights() {
                     </div>
                   )}
                   <div className="flex items-center gap-1 text-xs font-bold text-orange-600"><Eye size={14} /> Inspect records</div>
+                </div>
+
+                <div 
+                  onClick={() => setInspectModal({ title: "Flagged Corrupted Location / Swapped Coordinates", items: coordinateAnomalies })} 
+                  className={`rounded-2xl p-6 shadow-sm border border-gray-200 border-l-4 border-l-purple-500 cursor-pointer transition hover:-translate-y-1 hover:shadow-md ${coordinateAnomalies.length > 0 ? 'bg-purple-50/70 border-purple-300' : 'bg-white'}`}
+                >
+                  <div className="flex justify-between items-start mb-2"><span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Corrupted Location Data</span><MapPin size={20} className="text-purple-500" /></div>
+                  <p className="text-4xl font-black text-purple-600 mb-1">{coordinateAnomalies.length}</p>
+                  <p className="text-xs text-gray-600 mb-3 font-medium">Latitude & longitude swapped, placing property outside India.</p>
+                  {coordinateAnomalies.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                      <span className="inline-block px-2 py-0.5 bg-purple-100 text-purple-800 text-[10px] font-bold rounded-md">Anomaly: Transposed Lat/Lon</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 text-xs font-bold text-purple-600"><Eye size={14} /> Inspect records</div>
                 </div>
               </div>
             </section>

@@ -46,3 +46,28 @@ export function calculateInsights(listings) {
     localities
   };
 }
+
+// --- Added Coordinate Anomaly Checker for CoordinateAudit.jsx & Insights Radar ---
+const PUNE_BOUNDS = { latMin: 18.2, latMax: 18.8, lonMin: 73.5, lonMax: 74.2 };
+
+export function findCoordinateAnomalies(listings) {
+  if (!Array.isArray(listings)) return [];
+  return listings
+    .filter((l) => {
+      const lat = Number(l.latitude);
+      const lon = Number(l.longitude);
+      if (isNaN(lat) || isNaN(lon)) return false;
+      return (
+        lat < PUNE_BOUNDS.latMin ||
+        lat > PUNE_BOUNDS.latMax ||
+        lon < PUNE_BOUNDS.lonMin ||
+        lon > PUNE_BOUNDS.lonMax
+      );
+    })
+    .map((l) => ({
+      listingId: l.listing_id || l.id,
+      statedLocality: l.locality,
+      latitude: Number(l.latitude),
+      longitude: Number(l.longitude),
+    }));
+}
