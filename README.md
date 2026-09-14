@@ -46,6 +46,18 @@ A logged-in web app covering all six required screens:
 
 
 
+* Interactive Map Explorer: A dedicated geographic interface (MapExplorer.jsx) allowing users to visualize property listings across the city.
+
+
+
+* Dynamic Property Pins: Custom markers (PropertyMap.jsx) rendered precisely according to property latitude and longitude coordinates.
+
+
+
+* Coordinate Inspection: Spatial visualization enabling users to inspect listing locations and easily spot geographic anomalies (such as swapped coordinate outliers).
+
+
+
 
 
 
@@ -140,7 +152,7 @@ cd frontend
 
 npm install
 
-npm run dev     
+npm run dev
 
 
 
@@ -157,7 +169,7 @@ Live deployment:  https://ivyhome.vercel.app/
 ##### **What we distrusted, and what we did about it**
 
 * The right first move and the one that doesn't tell you much  is pointing an agent at every endpoint and patching whatever 404s. We did that first: /v1/listing/{id} doesn't exist, /v1/listings/{id} does
-* /v1/analytics/summary doesn't exist at all 
+* /v1/analytics/summary doesn't exist at all
 * the API key goes in an X-API-Key header, not the documented query parameter (a query-param request comes back 401 with a body that says exactly this).
 * None of that took more than an hour, and none of it is the interesting part.
 
