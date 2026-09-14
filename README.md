@@ -34,6 +34,16 @@ A logged-in web app covering all six required screens:
 
 * An insights screen standing in for the /v1/analytics/summary endpoint the docs promise and the API doesn't have, plus the corrupt / fake / mismatched-count findings below surfaced for a human to see.
 
+* Interactive Map Explorer: A dedicated geographic interface (MapExplorer.jsx) allowing users to visualize property listings across the city.
+
+
+
+* Dynamic Property Pins: Custom markers (PropertyMap.jsx) rendered precisely according to property latitude and longitude coordinates.
+
+
+
+* Coordinate Inspection: Spatial visualization enabling users to inspect listing locations and easily spot geographic anomalies (such as swapped coordinate outliers).
+
 
 
 
